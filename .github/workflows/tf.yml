@@ -12,12 +12,15 @@ permissions:
   pull-requests: write
 
 env:
-  TF_VERSION: "1.9.0"
+  TF_VERSION: "1.16.0"
   AWS_REGION: "eu-central-1"
 
 jobs:
   validate:
     if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: infra
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +46,9 @@ jobs:
 
   apply:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: infra
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
