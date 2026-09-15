@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bleschunov — 404</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #131f2d;
+    --orange: #f97316;
+    --body-text: #2b2b2b;
+    --divider: #e5e5e5;
+    --muted: #8a8f98;
+
+    --header-h: 64px;
+    --pad: 20px;
+    --name-size: 20px;
+    --icon-size: 32px;
+
+    --num-size: 72px;
+    --num-h: 100px;
+    --heading-size: 24px;
+    --heading-h: 34px;
+    --desc-size: 15px;
+    --desc-lh: 24px;
+    --desc-w: 320px;
+    --btn-w: 220px;
+    --btn-h: 52px;
+    --btn-radius: 26px;
+    --btn-font: 14px;
+    --block-gap: 19px;
+    --block-top: 130px;
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --header-h: 88px;
+      --pad: 64px;
+      --name-size: 26px;
+      --icon-size: 40px;
+
+      --num-size: 160px;
+      --num-h: 190px;
+      --heading-size: 40px;
+      --heading-h: 50px;
+      --desc-size: 17px;
+      --desc-lh: 28px;
+      --desc-w: 600px;
+      --btn-w: 220px;
+      --btn-h: 56px;
+      --btn-radius: 28px;
+      --btn-font: 15px;
+      --block-gap: 23px;
+      --block-top: 150px;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  body {
+    background: #ffffff;
+    color: var(--body-text);
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Header ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--pad);
+    background: #ffffff;
+    border-top: 4px solid var(--orange);
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: var(--name-size);
+    color: var(--navy);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .social-icons {
+    display: flex;
+    gap: 10px;
+  }
+
+  .social-icons a {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    border-radius: 50%;
+    background: var(--navy);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: calc(var(--icon-size) * 0.34);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+
+  .social-icons a:hover,
+  .social-icons a:focus-visible {
+    background: var(--orange);
+  }
+
+  /* ===== 404 content ===== */
+  main {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0 var(--pad) 64px;
+  }
+
+  .error {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--block-gap);
+    min-height: calc(100vh - var(--header-h) - var(--block-top));
+    padding-top: var(--block-top);
+  }
+
+  .error .number {
+    color: var(--orange);
+    font-weight: 700;
+    font-size: var(--num-size);
+    line-height: 1;
+    margin: 0;
+  }
+
+  .error .heading {
+    color: var(--navy);
+    font-weight: 700;
+    font-size: var(--heading-size);
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .error .description {
+    color: var(--body-text);
+    font-weight: 400;
+    font-size: var(--desc-size);
+    line-height: var(--desc-lh);
+    max-width: var(--desc-w);
+    margin: 0;
+  }
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--btn-w);
+    height: var(--btn-h);
+    border-radius: var(--btn-radius);
+    background: var(--navy);
+    color: #ffffff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: var(--btn-font);
+    text-decoration: none;
+    transition: background 0.2s ease;
+  }
+
+  .back-button:hover,
+  .back-button:focus-visible {
+    background: var(--orange);
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo" aria-label="bleschunov">bleschunov</a>
+    <div class="social-icons">
+      <a href="#" aria-label="LinkedIn">in</a>
+      <a href="#" aria-label="YouTube">YT</a>
+      <a href="#" aria-label="GitHub">GH</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="error">
+      <p class="number">404</p>
+      <p class="heading">Page Not Found</p>
+      <p class="description">The page you’re looking for doesn’t exist, was moved, or the link is broken. Check the URL or head back to the feed.</p>
+      <a href="/" class="back-button">Back to the Feed</a>
+    </div>
+  </main>
+
+</body>
+</html>
