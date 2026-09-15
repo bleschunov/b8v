@@ -1,0 +1,16 @@
+.idea/
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+
+**pycache**/
+*.pyc
+
+dist/*
+!dist/.gitkeep
+!dist/layer_build/.gitkeep
+
+.secrets
+
+.DS_Store
