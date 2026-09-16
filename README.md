@@ -115,6 +115,7 @@ flowchart TB
   - [ ] Run them in CI/CD
 - [ ] Split artifact building into its own CI/CD job(s)
 - [ ] Set up CI/CD for the whole project (build → test/lint → deploy via Terraform)
+- [ ] Add Open Graph
 
 ## About
 
