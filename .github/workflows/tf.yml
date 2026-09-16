@@ -85,9 +85,16 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
 
-      - name: Create dist directory
+      - name: Build Lambda layer
         run: |
+          rm -rf dist/layer_build
           mkdir -p dist/layer_build/python
+          
+          pip3 install \
+          -r api/requirements.txt \
+          -t dist/layer_build/python \
+          --platform manylinux2014_x86_64 \
+          --only-binary=:all:
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
