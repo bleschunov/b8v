@@ -1,72 +1,153 @@
-name: terraform
+name: CI/CD
 
 on:
-  pull_request:
-    branches: [main]
   push:
-    branches: [main]
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
-
-env:
-  TF_VERSION: "1.16.0"
-  AWS_REGION: "eu-central-1"
-  TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
-  TF_VAR_create_api_domain: ${{ vars.CREATE_API_DOMAIN }}
 
 jobs:
-  validate:
-    if: github.event_name == 'pull_request'
-    defaults:
-      run:
-        working-directory: infra
+  changes:
     runs-on: ubuntu-latest
+
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+      website: ${{ steps.filter.outputs.website }}
+      lambda: ${{ steps.filter.outputs.lambda }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+            website:
+              - 'website/**'
+
+            lambda:
+              - 'lambda/**'
+
+
+  validate:
+    needs: changes
+
+    if: needs.changes.outputs.infra == 'true'
+
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::473412284987:role/github_actions
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: terraform fmt
-        run: terraform fmt -check -recursive
-
-      - name: terraform init
+      - name: Terraform Init
+        working-directory: infra
         run: terraform init
 
-      - name: terraform validate
+      - name: Terraform Validate
+        working-directory: infra
         run: terraform validate
 
+
   apply:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    defaults:
-      run:
-        working-directory: infra
+    needs: changes
+
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.infra == 'true'
+
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::473412284987:role/github_actions
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
 
-      - name: terraform init
+      - name: Terraform Init
+        working-directory: infra
         run: terraform init
 
-      - name: terraform apply
+      - name: Terraform Apply
+        working-directory: infra
         run: terraform apply -auto-approve
+
+
+  website:
+    needs: changes
+
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.website == 'true'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Deploy website
+        run: |
+          aws s3 sync website/ s3://${{ secrets.WEBSITE_BUCKET }}
+
+
+  lambda:
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.lambda == 'true'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Build Lambda packages
+        run: |
+          cd api
+
+          zip ../dist/get_all_posts.zip get_all_posts.py
+          zip ../dist/put_post.zip put_post.py
+          zip ../dist/delete_post.zip delete_post.py
+
+          cd ..
+
+      - name: Update get_all_posts
+        run: |
+          aws lambda update-function-code \
+            --function-name "get_all_posts" \
+            --zip-file fileb://dist/get_all_posts.zip
+
+      - name: Update put_post
+        run: |
+          aws lambda update-function-code \
+            --function-name "put_post" \
+            --zip-file fileb://dist/put_post.zip
+
+      - name: Update delete_post
+        run: |
+          aws lambda update-function-code \
+            --function-name "delete_post" \
+            --zip-file fileb://dist/delete_post.zip
