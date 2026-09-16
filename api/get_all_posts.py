@@ -27,7 +27,6 @@ class PostsResponse(BaseModel):
 def lambda_handler(event, context):
     try:
         posts = PostsResponse.model_validate(table.scan()).items
-
     except ClientError as e:
         print(f"DynamoDB error: {e.response['Error']['Message']}")
         return _response(500, {"error": "Could not fetch posts"})
