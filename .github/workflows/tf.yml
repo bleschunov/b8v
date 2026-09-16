@@ -70,6 +70,10 @@ jobs:
       - changes
       - validate
 
+    concurrency:
+      group: terraform-apply
+      cancel-in-progress: false
+
     if: |
       github.ref == 'refs/heads/main' &&
       needs.changes.outputs.infra == 'true'
@@ -93,6 +97,8 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
+        env:
+          TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
         run: terraform apply -auto-approve
 
 
