@@ -93,6 +93,7 @@ jobs:
           pip3 install \
           -r api/requirements.txt \
           -t dist/layer_build/python \
+          --python-version 3.14 \
           --platform manylinux2014_x86_64 \
           --only-binary=:all:
 
