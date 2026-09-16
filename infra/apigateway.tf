@@ -3,7 +3,7 @@ resource "aws_apigatewayv2_api" "api" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins = ["https://b8v.dev", aws_cloudfront_distribution.s3_distribution.domain_name]
+    allow_origins = ["https://b8v.dev", "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"]
     allow_methods = ["GET"]
   }
 }
