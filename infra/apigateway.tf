@@ -1,6 +1,11 @@
 resource "aws_apigatewayv2_api" "api" {
   name          = "posts-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["https://b8v.dev"]
+    allow_methods = ["GET"]
+  }
 }
 
 resource "aws_apigatewayv2_integration" "get_all_posts_lambda" {
