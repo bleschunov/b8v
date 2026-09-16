@@ -85,6 +85,10 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
 
+      - name: Create dist directory
+        run: |
+          mkdir -p ../dist/layer_build/python
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
