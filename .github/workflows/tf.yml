@@ -31,7 +31,7 @@ jobs:
               - 'website/**'
 
             lambda:
-              - 'lambda/**'
+              - 'api/**'
 
 
   validate:
