@@ -110,6 +110,7 @@ jobs:
         working-directory: infra
         env:
           TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+          TF_VAR_create_api_domain: ${{ secrets.CREATE_API_DOMAIN }}
         run: terraform apply -auto-approve
 
 
