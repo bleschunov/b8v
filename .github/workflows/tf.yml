@@ -108,6 +108,8 @@ jobs:
 
 
   lambda:
+    needs: changes
+
     if: |
       github.ref == 'refs/heads/main' &&
       needs.changes.outputs.lambda == 'true'
