@@ -62,7 +62,9 @@ jobs:
 
 
   apply:
-    needs: changes
+    needs:
+      - changes
+      - validate
 
     if: |
       github.ref == 'refs/heads/main' &&
