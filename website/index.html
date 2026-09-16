@@ -181,7 +181,7 @@
     line-height: 1.3;
   }
 
-  .post .body {
+  .post p {
     color: var(--body-text);
     font-weight: 400;
     font-size: var(--body-size);
@@ -199,7 +199,7 @@
   .loading-row {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     gap: 8px;
     padding: 4px 0 20px;
     color: var(--muted);
@@ -260,33 +260,72 @@
 
   <main>
     <div class="feed" id="feed">
-      <article class="post">
-        <div class="date">OCT 10, 2023</div>
-        <div class="title">Datastep Update 4023. Preventing hallucinations when data is missing</div> <!-- Элемент опционален -->
-        <p class="body">This week, Vitaly @vitalykrenel and I came up with a mind-blowing prompt to teach GPT how to understand whether the database actually contains the columns needed to answer a question. We ran into an interesting problem: in most cases, the assistant technically gives a correct answer, but the user subjectively considers it wrong.</p>
-
-        <p class="body"><strong>Question:</strong> What are the most profitable properties in Moscow?<br><strong>Answer:</strong> It looks for properties that generate the most revenue and are managed by departments with “Moscow” in their name. Which is wrong — it should be looking at the property's address. This happens because the table doesn't have a column that explicitly represents the geographical location of the property.</p>
-
-        <p class="body">Ideally, we want the assistant to say: “Sorry bro, there’s no address in the table. I’m not a mind reader. Fix the data and we’ll be good, yo.”</p>
-
-        <p class="body">The obvious solution is to show GPT the table schema, the user's question, and ask: <strong>“Based on this table schema, can you answer the question?”</strong> It doesn't work. GPT gets creative and somehow manages to associate “Moscow” with some random column.</p>
-
-        <p class="body">So we came up with our mind-blowing solution: <strong>chain-of-thought</strong>, and that's pretty much the whole story. We ask GPT to go through several steps:</p>
-
-        <p class="body"><strong>Step 1:</strong> Describe what types of data are needed to answer the question.<br><strong>Step 2:</strong> Based on the data schema and the previous answer, identify which types of data are present in the table and which are missing.<br><strong>Step 3:</strong> Based on the previous answers, determine whether it is possible to construct an SQL query that answers the question.</p>
-
-        <p class="body">This sequence of steps helps GPT better understand the question and map it to the actual database schema. And as a result, we get exactly what we wanted.</p>
-
-        <p class="body">For the first time, I really felt the full potential of GPT. It's not just a language model for answering questions. It's an extremely flexible tool that can be used for all kinds of different purposes and tasks.</p>
-      </article>
+      <div class="loading-row" id="loadingRow">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span>Loading posts…</span>
+      </div>
     </div>
   </main>
 
-<!--  <div class="loading-row" id="loadingRow">-->
-<!--    <div class="dots"><span></span><span></span><span></span></div>-->
-<!--    <span>Loading more posts…</span>-->
-<!--  </div>-->
   <div id="sentinel"></div>
 
+  <script>
+    const feed = document.getElementById('feed');
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      if (isNaN(d)) return iso; // на случай нестандартного формата с бэка
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }).toUpperCase().replace(',', ',');
+    }
+
+    function renderPost(post) {
+      const article = document.createElement('article');
+      article.className = 'post';
+
+      const dateEl = document.createElement('div');
+      dateEl.className = 'date';
+      dateEl.textContent = formatDate(post.posted_at);
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'title';
+      titleEl.textContent = post.title;
+
+      const contentEl = document.createElement('div');
+      contentEl.innerHTML = post.content;
+
+      article.appendChild(dateEl);
+      article.appendChild(titleEl);
+      article.appendChild(contentEl);
+      return article;
+    }
+
+    async function loadPosts() {
+      try {
+        const res = await fetch('https://api.b8v.dev/posts');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const posts = await res.json();
+
+        feed.innerHTML = '';
+
+        posts.forEach((post, i) => {
+          feed.appendChild(renderPost(post));
+          if (i < posts.length - 1) {
+            const hr = document.createElement('hr');
+            hr.className = 'divider';
+            feed.appendChild(hr);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load posts:', err);
+        feed.innerHTML = '<p style="color: var(--muted);">No posts yet or couldn\'t fetch them :(</p>';
+      }
+    }
+
+    loadPosts();
+  </script>
 </body>
 </html>
