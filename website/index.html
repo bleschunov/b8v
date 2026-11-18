@@ -424,14 +424,23 @@
 
     .flip-btn { top: 11.4cqw; font-size: 3.2cqw; padding: 1.2cqw 0; }
 
+    /* the back is a size container: the QR takes whatever height is left
+       after the text, so nothing spills out of the card on short screens */
     .card.back {
+      container-type: size;
       grid-template-columns: 1fr;
-      grid-template-rows: 1fr auto;
+      grid-template-rows: minmax(0, 1fr) auto;
       grid-template-areas: "qr" "text";
       align-items: center;
       row-gap: 6cqw;
     }
-    .back-qr { width: 100%; max-width: 62vh; padding: 3.5cqw; }
+    .back-qr {
+      width: min(100%, calc(100cqh - 30cqw));
+      min-width: 40cqw;
+      padding: 3.5cqw;
+      align-self: center;
+    }
+    .card.back .flip-btn { top: auto; bottom: 10cqw; }
     .back-kicker { font-size: 3.4cqw; margin-bottom: 3cqw; }
     .back-name { font-size: 6cqw; margin-bottom: 2cqw; }
     .back-sub { font-size: 3.9cqw; }

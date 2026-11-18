@@ -27,7 +27,7 @@
     .b8v-status .dot.fail { background: #e5484d; }
     @keyframes b8v-pulse { 70% { box-shadow: 0 0 0 6px rgba(34, 160, 107, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 160, 107, 0); } }
     @media (prefers-reduced-motion: reduce) { .b8v-status .dot.ok { animation: none; } }
-    @media (max-width: 400px) { .b8v-status { font-size: 11px; gap: 4px 7px; } }
+    @media (max-width: 480px) { .b8v-status { font-size: 11px; gap: 4px 6px; } }
     @media print { .b8v-status { display: none !important; } }
   `;
 
