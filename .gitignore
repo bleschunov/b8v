@@ -14,3 +14,4 @@ dist/*
 .secrets
 
 .DS_Store
+website/build.json

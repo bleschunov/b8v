@@ -3,8 +3,9 @@
  * Fir garland, hanging baubles, falling snow (and a snow cap on the card).
  *
  * Include in <head> on every page:
- *   <script src="/winter.js" data-mode="card"></script>     (business card page)
- *   <script src="/winter.js" data-mode="compact"></script>  (pages with a header)
+ *   <script src="/winter.js" data-mode="card"></script>      (business card page)
+ *   <script src="/winter.js" data-mode="header"></script>    (pages with a header: baubles touch the
+ *                                                             header but never cover its logo or icons)
  *
  * Fir branch: based on "Fir branch with cones" (cones removed) by OlKu,
  * Openclipart, public domain (CC0).
@@ -14,7 +15,7 @@
   if (!(m === 10 || m === 11 || (m === 0 && day <= 30))) return;
 
   var script = document.currentScript;
-  var MODE = (script && script.dataset.mode) || 'compact';
+  var MODE = (script && script.dataset.mode) || 'header';
   var root = document.documentElement;
   root.classList.add('winter', 'winter-' + MODE);
 
@@ -22,8 +23,11 @@
   var css = `
     html.winter header { border-top: 0 !important; }
     html.winter-card body { border-top: 0 !important; padding-top: 130px !important; }
-    html.winter-compact body { padding-top: 44px; }
-    @media (max-width: 640px) { html.winter-card body { padding-top: 110px !important; } }
+    html.winter-header body { padding-top: 92px; }
+    @media (max-width: 640px) {
+      html.winter-card body { padding-top: 110px !important; }
+      html.winter-header body { padding-top: 76px; }
+    }
 
     .xmas { position: absolute; top: 0; left: 0; right: 0; height: 170px; pointer-events: none; z-index: 20; }
     .xmas svg { position: absolute; top: 0; left: 0; overflow: visible; }
@@ -67,7 +71,7 @@
     };
   }
 
-  var compact = MODE !== 'card';
+  var compact = false; // every page uses the full-size garland and baubles
   function stemY(x) { return (compact ? 14 : 22) + Math.sin(x / 95) * (compact ? 3 : 4); }
 
   /* ---------- fir garland ---------- */
@@ -92,14 +96,15 @@
   }
 
   /* ---------- baubles ---------- */
-  // On compact pages keep baubles away from header content (logo, icons).
-  function blockedRanges() {
-    if (!compact) return [];
+  // On header pages baubles may dip into the header, but never over its content
+  // (logo, icons): above those, strings get shorter or the bauble is skipped.
+  function obstacles() {
+    if (MODE !== 'header') return [];
     var header = document.querySelector('header');
     if (!header) return [];
     return Array.prototype.map.call(header.children, function (el) {
       var b = el.getBoundingClientRect();
-      return [b.left - 22, b.right + 22];
+      return { l: b.left - 16, r: b.right + 16, top: b.top + window.scrollY - 6 };
     });
   }
 
@@ -117,7 +122,7 @@
     var r = rng(21);
     var colors = ['orange', 'navy', 'silver'];
     var gap = mobile ? 34 : 52;
-    var blocked = blockedRanges();
+    var obs = obstacles();
     var prev = -1, i = 0;
     for (var x = 16 + r() * 10; x < W - 10; x += gap * (0.75 + r() * 0.5), i++) {
       var c;
@@ -127,10 +132,14 @@
       var rad0 = 8 + r() * 6;
       var stripe = c === 'navy' && r() < 0.5;
       var xi = Math.round(x);
-      if (blocked.some(function (b) { return xi > b[0] && xi < b[1]; })) continue;
-
       var y0 = stemY(xi) + 3;
       var L = L0 * k, rad = rad0 * k;
+      var limit = Infinity;
+      obs.forEach(function (o) { if (xi + rad > o.l && xi - rad < o.r) limit = Math.min(limit, o.top); });
+      if (y0 + L + 5 + 2 * rad > limit) {
+        L = limit - y0 - 5 - 2 * rad - 2;   // shorten the string above the logo/icons
+        if (L < 10) continue;               // no room: skip this bauble
+      }
       var cy = y0 + L + 5 + rad;
       var dur = (4 + (i % 3) * 1.1).toFixed(1);
       var amp = (6 - Math.min(L, 80) / 25).toFixed(1);
@@ -203,12 +212,11 @@
     cv.setAttribute('aria-hidden', 'true');
     document.body.appendChild(cv);
 
-    var card = document.querySelector('.card');
-    if (card) {
+    Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
       card.insertAdjacentHTML('afterbegin',
         '<svg class="b8v-drift" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden="true">' +
         '<path fill="#fff" d="M0 10 L0 6 C6 2 14 2 20 5 C28 1 40 1 48 5 C56 2 66 3 72 6 C80 2 92 0 102 4 C112 1 122 2 130 5 C138 2 150 1 160 5 C168 2 178 3 186 5 C192 3 198 4 200 6 L200 10 Z"/></svg>');
-    }
+    });
 
     var svg = xmas.querySelector('.ornaments');
     var box = xmas.querySelector('.branches');

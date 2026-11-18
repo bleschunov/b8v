@@ -133,6 +133,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Write build info
+        run: |
+          printf '{"commit":"%s","deployed_at":"%s","run_url":"%s"}\n' \
+            "$GITHUB_SHA" \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            > website/build.json
+          cat website/build.json
+
       - name: Deploy website
         run: |
           aws s3 sync website/ s3://${{ secrets.WEBSITE_BUCKET }}

@@ -67,11 +67,29 @@
     --inset: 7.5cqw;
   }
 
-  .card {
-    container-type: inline-size;
+  /* ===== Flip + tilt ===== */
+  .flip {
     position: relative;
     width: 100%;
     aspect-ratio: 1.75 / 1;
+    perspective: 1400px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .flip-inner {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .card {
+    container-type: inline-size;
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     background-color: var(--paper);
     /* laid-paper texture, like the printed card */
     background-image: repeating-linear-gradient(
@@ -93,14 +111,84 @@
       "person person"
       "org    phone";
     padding: 7cqw var(--inset) 6cqw var(--inset);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
 
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 1px 2px rgba(19, 31, 45, 0.08),
-      0 18px 48px -14px rgba(19, 31, 45, 0.3);
+  /* light that follows the tilt */
+  .glare {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--ga, 0);
+    background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
+      rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 45%, rgba(19, 31, 45, 0.07) 100%);
+  }
+
+  .flip-btn {
+    position: absolute;
+    top: 6.2cqw;
+    right: var(--inset);
+    font: inherit;
+    font-size: 1.5cqw;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    padding: 0.6cqw 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .flip-btn:hover, .flip-btn:focus-visible { color: var(--orange); outline: none; }
+
+  #b8v-snow { transition: opacity 0.4s ease; }
+  html.qr-open #b8v-snow { opacity: 0; }
+
+  /* ===== Back side ===== */
+  .card.back {
+    transform: rotateY(180deg);
+    grid-template-columns: auto 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "qr text";
+    align-items: center;
+    column-gap: 5cqw;
+  }
+
+  .back-qr {
+    grid-area: qr;
+    width: 33cqw;
+    padding: 1.6cqw;
+    background: #fff;
+    border-radius: 4px;
+    color: var(--navy);
+    box-shadow: 0 0 0 1px rgba(19, 31, 45, 0.06);
+  }
+  .back-qr svg { display: block; width: 100%; height: auto; }
+
+  .back-text { grid-area: text; }
+
+  .back-kicker {
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 1.6cqw;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 0 0 2cqw;
+  }
+
+  .back-name {
+    margin: 0 0 1cqw;
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 3cqw;
+    line-height: 1.2;
+  }
+
+  .back-sub {
+    margin: 0;
+    font-size: 1.95cqw;
+    line-height: 1.7;
   }
 
   /* ===== Logo (same animation as b8v.dev) ===== */
@@ -236,6 +324,8 @@
   .phone .label { color: var(--muted); }
 
   /* ===== Below the card ===== */
+  #status { padding: 0 var(--inset); margin-top: -10px; flex-shrink: 0; }
+
   .actions {
     width: 100%;
     padding: 0 var(--inset);
@@ -309,10 +399,9 @@
 
     .stage { flex: 1 1 0; min-height: 0; gap: 14px; --inset: 9cqw; }
 
+    .flip { aspect-ratio: auto; flex: 1 1 0; min-height: 0; }
+
     .card {
-      aspect-ratio: auto;
-      flex: 1 1 0;
-      min-height: 0;
       grid-template-columns: 1fr;
       grid-template-rows: auto 1fr auto auto;
       grid-template-areas:
@@ -332,6 +421,20 @@
     .role::before { width: 5cqw; margin-right: 2.4cqw; }
 
     .org, .phone { font-size: 3.9cqw; }
+
+    .flip-btn { top: 11.4cqw; font-size: 3.2cqw; padding: 1.2cqw 0; }
+
+    .card.back {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+      grid-template-areas: "qr" "text";
+      align-items: center;
+      row-gap: 6cqw;
+    }
+    .back-qr { width: 100%; max-width: 62vh; padding: 3.5cqw; }
+    .back-kicker { font-size: 3.4cqw; margin-bottom: 3cqw; }
+    .back-name { font-size: 6cqw; margin-bottom: 2cqw; }
+    .back-sub { font-size: 3.9cqw; }
     .phone { margin-top: 2.4cqw; }
 
     .actions { flex-direction: column; align-items: flex-start; gap: 12px; flex-shrink: 0; }
@@ -344,18 +447,26 @@
     @page { size: 85mm 55mm; margin: 0; }
     body { background: #fff; padding: 0; border: 0; min-height: 0; display: block; }
     .stage { display: block; width: auto; }
-    .card { width: 85mm; aspect-ratio: 85 / 55; box-shadow: none; border-radius: 0; background-image: none; }
+    .flip { width: 85mm; aspect-ratio: 85 / 55; perspective: none; }
+    .flip-inner { transform: none !important; }
+    .card.back, .flip-btn, .glare { display: none !important; }
+    .card { box-shadow: none; border-radius: 0; background-image: none; }
     .actions { display: none; }
     .b8v-eight { animation: none; opacity: 0; }
     .b8v-v { animation: none; left: 9ch; }
     .b8v-middle { animation: none; opacity: 1; transform: none; }
   }
 </style>
+<script src="/status.js" defer></script>
 </head>
 <body>
 
   <main class="stage">
-  <article class="card" itemscope itemtype="https://schema.org/Person">
+  <div class="flip" id="flip">
+  <div class="flip-inner">
+  <article class="card front" itemscope itemtype="https://schema.org/Person">
+    <div class="glare" aria-hidden="true"></div>
+    <button class="flip-btn" type="button" aria-label="Show QR code">↻ QR</button>
     <div class="logo-row">
       <div class="b8v-logo" aria-label="bleschunov">
         <span class="b8v-b">b</span>
@@ -390,6 +501,19 @@
     </div>
   </article>
 
+  <div class="card back" aria-hidden="true">
+    <div class="glare" aria-hidden="true"></div>
+    <button class="flip-btn" type="button" aria-label="Show the front of the card" tabindex="-1">↻ Back</button>
+    <div class="back-qr"><svg class="qr" viewBox="0 0 61 61" shape-rendering="crispEdges" role="img" aria-label="QR code with contact details"><path fill="currentColor" d="M0 0h7v1h-7zM8 0h1v1h-1zM12 0h4v1h-4zM22 0h1v1h-1zM28 0h4v1h-4zM35 0h1v1h-1zM37 0h1v1h-1zM39 0h1v1h-1zM41 0h2v1h-2zM44 0h1v1h-1zM47 0h2v1h-2zM51 0h2v1h-2zM54 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h4v1h-4zM13 1h2v1h-2zM17 1h1v1h-1zM20 1h1v1h-1zM22 1h2v1h-2zM25 1h2v1h-2zM28 1h3v1h-3zM32 1h1v1h-1zM34 1h1v1h-1zM37 1h1v1h-1zM40 1h3v1h-3zM44 1h1v1h-1zM47 1h1v1h-1zM51 1h2v1h-2zM54 1h1v1h-1zM60 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM10 2h2v1h-2zM13 2h1v1h-1zM18 2h1v1h-1zM20 2h6v1h-6zM27 2h1v1h-1zM33 2h1v1h-1zM38 2h1v1h-1zM44 2h2v1h-2zM47 2h1v1h-1zM49 2h4v1h-4zM54 2h1v1h-1zM56 2h3v1h-3zM60 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h5v1h-5zM15 3h2v1h-2zM20 3h3v1h-3zM25 3h1v1h-1zM29 3h1v1h-1zM33 3h2v1h-2zM36 3h1v1h-1zM38 3h1v1h-1zM43 3h1v1h-1zM45 3h6v1h-6zM52 3h1v1h-1zM54 3h1v1h-1zM56 3h3v1h-3zM60 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM18 4h1v1h-1zM21 4h2v1h-2zM24 4h2v1h-2zM27 4h8v1h-8zM37 4h1v1h-1zM39 4h2v1h-2zM43 4h3v1h-3zM47 4h5v1h-5zM54 4h1v1h-1zM56 4h3v1h-3zM60 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h2v1h-2zM14 5h1v1h-1zM17 5h1v1h-1zM19 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM26 5h1v1h-1zM28 5h1v1h-1zM32 5h1v1h-1zM34 5h4v1h-4zM39 5h2v1h-2zM43 5h1v1h-1zM46 5h1v1h-1zM48 5h3v1h-3zM54 5h1v1h-1zM60 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM38 6h1v1h-1zM40 6h1v1h-1zM42 6h1v1h-1zM44 6h1v1h-1zM46 6h1v1h-1zM48 6h1v1h-1zM50 6h1v1h-1zM52 6h1v1h-1zM54 6h7v1h-7zM8 7h2v1h-2zM11 7h1v1h-1zM13 7h3v1h-3zM19 7h3v1h-3zM23 7h2v1h-2zM28 7h1v1h-1zM32 7h1v1h-1zM35 7h2v1h-2zM41 7h1v1h-1zM44 7h1v1h-1zM47 7h2v1h-2zM50 7h2v1h-2zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM9 8h5v1h-5zM17 8h2v1h-2zM20 8h3v1h-3zM27 8h7v1h-7zM35 8h1v1h-1zM37 8h7v1h-7zM47 8h1v1h-1zM49 8h3v1h-3zM54 8h1v1h-1zM57 8h1v1h-1zM59 8h2v1h-2zM2 9h1v1h-1zM4 9h2v1h-2zM10 9h1v1h-1zM12 9h2v1h-2zM17 9h1v1h-1zM19 9h2v1h-2zM23 9h2v1h-2zM26 9h3v1h-3zM30 9h1v1h-1zM32 9h1v1h-1zM35 9h3v1h-3zM39 9h2v1h-2zM42 9h1v1h-1zM44 9h1v1h-1zM48 9h2v1h-2zM51 9h1v1h-1zM53 9h3v1h-3zM57 9h3v1h-3zM0 10h1v1h-1zM2 10h5v1h-5zM8 10h3v1h-3zM12 10h1v1h-1zM14 10h6v1h-6zM21 10h2v1h-2zM26 10h1v1h-1zM30 10h3v1h-3zM34 10h3v1h-3zM38 10h1v1h-1zM40 10h6v1h-6zM47 10h2v1h-2zM50 10h1v1h-1zM54 10h1v1h-1zM3 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM13 11h2v1h-2zM16 11h1v1h-1zM19 11h1v1h-1zM21 11h2v1h-2zM24 11h1v1h-1zM26 11h4v1h-4zM31 11h2v1h-2zM36 11h1v1h-1zM39 11h1v1h-1zM41 11h2v1h-2zM44 11h1v1h-1zM46 11h2v1h-2zM49 11h1v1h-1zM51 11h2v1h-2zM54 11h1v1h-1zM56 11h1v1h-1zM58 11h3v1h-3zM2 12h1v1h-1zM4 12h4v1h-4zM9 12h3v1h-3zM16 12h2v1h-2zM19 12h1v1h-1zM24 12h2v1h-2zM31 12h2v1h-2zM35 12h2v1h-2zM39 12h1v1h-1zM41 12h2v1h-2zM46 12h3v1h-3zM53 12h2v1h-2zM58 12h1v1h-1zM60 12h1v1h-1zM0 13h1v1h-1zM2 13h2v1h-2zM5 13h1v1h-1zM8 13h5v1h-5zM17 13h2v1h-2zM21 13h1v1h-1zM26 13h3v1h-3zM31 13h2v1h-2zM35 13h1v1h-1zM37 13h2v1h-2zM40 13h2v1h-2zM45 13h1v1h-1zM49 13h3v1h-3zM59 13h1v1h-1zM3 14h2v1h-2zM6 14h2v1h-2zM11 14h1v1h-1zM14 14h6v1h-6zM21 14h2v1h-2zM24 14h1v1h-1zM36 14h4v1h-4zM43 14h2v1h-2zM47 14h1v1h-1zM49 14h1v1h-1zM54 14h1v1h-1zM56 14h1v1h-1zM58 14h2v1h-2zM1 15h3v1h-3zM11 15h3v1h-3zM15 15h1v1h-1zM18 15h1v1h-1zM20 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM29 15h8v1h-8zM38 15h1v1h-1zM42 15h2v1h-2zM45 15h1v1h-1zM48 15h2v1h-2zM51 15h2v1h-2zM54 15h1v1h-1zM56 15h1v1h-1zM0 16h1v1h-1zM2 16h1v1h-1zM4 16h1v1h-1zM6 16h4v1h-4zM11 16h1v1h-1zM15 16h1v1h-1zM21 16h1v1h-1zM23 16h5v1h-5zM34 16h2v1h-2zM37 16h2v1h-2zM41 16h6v1h-6zM50 16h1v1h-1zM52 16h7v1h-7zM0 17h1v1h-1zM5 17h1v1h-1zM7 17h4v1h-4zM12 17h1v1h-1zM15 17h3v1h-3zM20 17h3v1h-3zM27 17h2v1h-2zM32 17h4v1h-4zM39 17h3v1h-3zM45 17h3v1h-3zM52 17h1v1h-1zM56 17h1v1h-1zM58 17h1v1h-1zM2 18h5v1h-5zM10 18h1v1h-1zM12 18h2v1h-2zM16 18h1v1h-1zM18 18h2v1h-2zM28 18h2v1h-2zM31 18h1v1h-1zM36 18h1v1h-1zM38 18h2v1h-2zM45 18h4v1h-4zM53 18h1v1h-1zM55 18h6v1h-6zM1 19h2v1h-2zM5 19h1v1h-1zM7 19h1v1h-1zM9 19h3v1h-3zM13 19h1v1h-1zM15 19h2v1h-2zM18 19h1v1h-1zM20 19h8v1h-8zM31 19h8v1h-8zM40 19h1v1h-1zM42 19h1v1h-1zM46 19h2v1h-2zM50 19h1v1h-1zM52 19h2v1h-2zM55 19h1v1h-1zM57 19h1v1h-1zM0 20h3v1h-3zM4 20h6v1h-6zM13 20h2v1h-2zM17 20h1v1h-1zM19 20h1v1h-1zM22 20h1v1h-1zM24 20h2v1h-2zM27 20h2v1h-2zM30 20h1v1h-1zM33 20h3v1h-3zM39 20h2v1h-2zM45 20h3v1h-3zM50 20h3v1h-3zM54 20h2v1h-2zM58 20h1v1h-1zM1 21h1v1h-1zM3 21h1v1h-1zM7 21h1v1h-1zM9 21h1v1h-1zM12 21h2v1h-2zM16 21h1v1h-1zM18 21h1v1h-1zM21 21h2v1h-2zM25 21h1v1h-1zM27 21h3v1h-3zM31 21h2v1h-2zM36 21h2v1h-2zM40 21h3v1h-3zM44 21h1v1h-1zM47 21h2v1h-2zM54 21h2v1h-2zM58 21h2v1h-2zM2 22h1v1h-1zM4 22h3v1h-3zM8 22h1v1h-1zM10 22h2v1h-2zM14 22h1v1h-1zM16 22h2v1h-2zM19 22h3v1h-3zM23 22h2v1h-2zM26 22h2v1h-2zM29 22h4v1h-4zM34 22h2v1h-2zM41 22h3v1h-3zM48 22h1v1h-1zM50 22h2v1h-2zM54 22h1v1h-1zM56 22h1v1h-1zM58 22h1v1h-1zM1 23h2v1h-2zM4 23h2v1h-2zM13 23h4v1h-4zM18 23h1v1h-1zM20 23h4v1h-4zM25 23h2v1h-2zM28 23h3v1h-3zM32 23h1v1h-1zM34 23h1v1h-1zM37 23h1v1h-1zM41 23h1v1h-1zM43 23h6v1h-6zM52 23h1v1h-1zM54 23h3v1h-3zM58 23h1v1h-1zM1 24h1v1h-1zM3 24h1v1h-1zM5 24h2v1h-2zM8 24h7v1h-7zM16 24h1v1h-1zM19 24h3v1h-3zM23 24h3v1h-3zM30 24h3v1h-3zM36 24h2v1h-2zM42 24h2v1h-2zM45 24h1v1h-1zM48 24h2v1h-2zM51 24h2v1h-2zM55 24h1v1h-1zM58 24h3v1h-3zM1 25h1v1h-1zM4 25h1v1h-1zM8 25h1v1h-1zM10 25h2v1h-2zM13 25h4v1h-4zM18 25h2v1h-2zM23 25h1v1h-1zM29 25h2v1h-2zM32 25h1v1h-1zM35 25h2v1h-2zM38 25h1v1h-1zM40 25h2v1h-2zM43 25h1v1h-1zM49 25h3v1h-3zM56 25h2v1h-2zM60 25h1v1h-1zM1 26h2v1h-2zM4 26h1v1h-1zM6 26h1v1h-1zM8 26h2v1h-2zM12 26h1v1h-1zM14 26h2v1h-2zM21 26h3v1h-3zM26 26h1v1h-1zM28 26h3v1h-3zM32 26h3v1h-3zM39 26h1v1h-1zM45 26h1v1h-1zM47 26h1v1h-1zM50 26h1v1h-1zM53 26h1v1h-1zM57 26h2v1h-2zM0 27h4v1h-4zM10 27h2v1h-2zM17 27h1v1h-1zM19 27h1v1h-1zM24 27h4v1h-4zM29 27h2v1h-2zM32 27h3v1h-3zM40 27h2v1h-2zM43 27h3v1h-3zM49 27h1v1h-1zM52 27h3v1h-3zM56 27h1v1h-1zM59 27h1v1h-1zM0 28h1v1h-1zM2 28h11v1h-11zM14 28h2v1h-2zM18 28h2v1h-2zM22 28h1v1h-1zM24 28h9v1h-9zM41 28h6v1h-6zM50 28h7v1h-7zM58 28h2v1h-2zM3 29h2v1h-2zM8 29h2v1h-2zM11 29h2v1h-2zM15 29h4v1h-4zM20 29h4v1h-4zM26 29h1v1h-1zM28 29h1v1h-1zM32 29h3v1h-3zM36 29h1v1h-1zM39 29h1v1h-1zM44 29h6v1h-6zM51 29h2v1h-2zM56 29h1v1h-1zM58 29h2v1h-2zM0 30h1v1h-1zM3 30h2v1h-2zM6 30h1v1h-1zM8 30h1v1h-1zM13 30h1v1h-1zM16 30h1v1h-1zM18 30h2v1h-2zM21 30h1v1h-1zM24 30h2v1h-2zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM34 30h1v1h-1zM36 30h1v1h-1zM38 30h1v1h-1zM41 30h1v1h-1zM43 30h3v1h-3zM48 30h1v1h-1zM51 30h2v1h-2zM54 30h1v1h-1zM56 30h1v1h-1zM59 30h2v1h-2zM2 31h3v1h-3zM8 31h3v1h-3zM12 31h4v1h-4zM17 31h3v1h-3zM21 31h8v1h-8zM32 31h1v1h-1zM35 31h3v1h-3zM41 31h3v1h-3zM46 31h2v1h-2zM50 31h1v1h-1zM52 31h1v1h-1zM56 31h1v1h-1zM59 31h1v1h-1zM1 32h8v1h-8zM10 32h1v1h-1zM12 32h1v1h-1zM14 32h2v1h-2zM19 32h2v1h-2zM22 32h1v1h-1zM24 32h1v1h-1zM27 32h6v1h-6zM34 32h2v1h-2zM39 32h2v1h-2zM42 32h2v1h-2zM46 32h2v1h-2zM49 32h2v1h-2zM52 32h6v1h-6zM4 33h1v1h-1zM8 33h2v1h-2zM11 33h1v1h-1zM15 33h1v1h-1zM17 33h1v1h-1zM20 33h1v1h-1zM22 33h1v1h-1zM24 33h1v1h-1zM30 33h3v1h-3zM35 33h1v1h-1zM37 33h1v1h-1zM39 33h4v1h-4zM44 33h1v1h-1zM49 33h1v1h-1zM52 33h1v1h-1zM54 33h2v1h-2zM57 33h1v1h-1zM60 33h1v1h-1zM1 34h1v1h-1zM3 34h2v1h-2zM6 34h1v1h-1zM9 34h2v1h-2zM15 34h5v1h-5zM21 34h1v1h-1zM23 34h2v1h-2zM26 34h1v1h-1zM28 34h3v1h-3zM35 34h1v1h-1zM40 34h2v1h-2zM43 34h1v1h-1zM45 34h2v1h-2zM55 34h4v1h-4zM2 35h1v1h-1zM5 35h1v1h-1zM8 35h1v1h-1zM10 35h2v1h-2zM13 35h2v1h-2zM16 35h1v1h-1zM19 35h1v1h-1zM24 35h3v1h-3zM31 35h1v1h-1zM33 35h2v1h-2zM38 35h1v1h-1zM40 35h2v1h-2zM43 35h1v1h-1zM45 35h1v1h-1zM49 35h2v1h-2zM52 35h3v1h-3zM56 35h1v1h-1zM58 35h1v1h-1zM60 35h1v1h-1zM0 36h2v1h-2zM4 36h1v1h-1zM6 36h1v1h-1zM8 36h4v1h-4zM14 36h1v1h-1zM17 36h2v1h-2zM20 36h1v1h-1zM22 36h4v1h-4zM27 36h4v1h-4zM33 36h1v1h-1zM35 36h1v1h-1zM38 36h1v1h-1zM40 36h4v1h-4zM46 36h4v1h-4zM51 36h2v1h-2zM54 36h1v1h-1zM58 36h1v1h-1zM1 37h1v1h-1zM3 37h1v1h-1zM5 37h1v1h-1zM8 37h1v1h-1zM11 37h5v1h-5zM17 37h1v1h-1zM19 37h3v1h-3zM26 37h6v1h-6zM33 37h1v1h-1zM35 37h4v1h-4zM40 37h2v1h-2zM43 37h1v1h-1zM45 37h1v1h-1zM47 37h4v1h-4zM52 37h1v1h-1zM54 37h4v1h-4zM59 37h2v1h-2zM0 38h4v1h-4zM6 38h1v1h-1zM8 38h2v1h-2zM12 38h1v1h-1zM14 38h1v1h-1zM16 38h1v1h-1zM18 38h2v1h-2zM21 38h2v1h-2zM26 38h1v1h-1zM28 38h1v1h-1zM30 38h1v1h-1zM32 38h1v1h-1zM34 38h6v1h-6zM42 38h2v1h-2zM48 38h1v1h-1zM51 38h3v1h-3zM57 38h4v1h-4zM0 39h1v1h-1zM2 39h1v1h-1zM8 39h2v1h-2zM11 39h5v1h-5zM17 39h1v1h-1zM19 39h1v1h-1zM21 39h1v1h-1zM24 39h1v1h-1zM26 39h2v1h-2zM29 39h2v1h-2zM33 39h1v1h-1zM36 39h7v1h-7zM44 39h1v1h-1zM46 39h1v1h-1zM48 39h3v1h-3zM52 39h1v1h-1zM56 39h1v1h-1zM60 39h1v1h-1zM3 40h4v1h-4zM11 40h1v1h-1zM13 40h1v1h-1zM15 40h1v1h-1zM18 40h2v1h-2zM21 40h1v1h-1zM23 40h1v1h-1zM25 40h1v1h-1zM27 40h1v1h-1zM32 40h2v1h-2zM39 40h1v1h-1zM44 40h1v1h-1zM49 40h2v1h-2zM52 40h1v1h-1zM59 40h1v1h-1zM0 41h6v1h-6zM7 41h2v1h-2zM10 41h2v1h-2zM14 41h3v1h-3zM19 41h1v1h-1zM21 41h1v1h-1zM23 41h3v1h-3zM27 41h1v1h-1zM29 41h1v1h-1zM32 41h3v1h-3zM36 41h1v1h-1zM40 41h2v1h-2zM43 41h1v1h-1zM46 41h2v1h-2zM49 41h1v1h-1zM52 41h1v1h-1zM55 41h1v1h-1zM59 41h2v1h-2zM0 42h2v1h-2zM3 42h1v1h-1zM5 42h2v1h-2zM8 42h1v1h-1zM12 42h2v1h-2zM15 42h4v1h-4zM26 42h4v1h-4zM32 42h5v1h-5zM38 42h4v1h-4zM43 42h1v1h-1zM46 42h3v1h-3zM54 42h7v1h-7zM0 43h1v1h-1zM3 43h3v1h-3zM7 43h3v1h-3zM12 43h4v1h-4zM20 43h1v1h-1zM24 43h3v1h-3zM28 43h1v1h-1zM30 43h5v1h-5zM36 43h2v1h-2zM40 43h1v1h-1zM42 43h2v1h-2zM46 43h2v1h-2zM49 43h2v1h-2zM52 43h1v1h-1zM54 43h2v1h-2zM57 43h1v1h-1zM59 43h1v1h-1zM4 44h3v1h-3zM9 44h2v1h-2zM12 44h2v1h-2zM18 44h1v1h-1zM20 44h3v1h-3zM24 44h1v1h-1zM27 44h3v1h-3zM31 44h1v1h-1zM35 44h1v1h-1zM37 44h4v1h-4zM42 44h1v1h-1zM47 44h1v1h-1zM49 44h2v1h-2zM54 44h1v1h-1zM56 44h1v1h-1zM58 44h2v1h-2zM1 45h1v1h-1zM4 45h2v1h-2zM8 45h1v1h-1zM10 45h1v1h-1zM12 45h2v1h-2zM15 45h2v1h-2zM18 45h1v1h-1zM20 45h2v1h-2zM23 45h2v1h-2zM26 45h3v1h-3zM31 45h2v1h-2zM34 45h5v1h-5zM41 45h1v1h-1zM48 45h1v1h-1zM54 45h1v1h-1zM57 45h1v1h-1zM59 45h1v1h-1zM0 46h2v1h-2zM6 46h3v1h-3zM10 46h1v1h-1zM13 46h3v1h-3zM17 46h2v1h-2zM20 46h1v1h-1zM23 46h5v1h-5zM29 46h1v1h-1zM38 46h2v1h-2zM41 46h1v1h-1zM43 46h3v1h-3zM48 46h1v1h-1zM50 46h1v1h-1zM58 46h2v1h-2zM2 47h2v1h-2zM7 47h1v1h-1zM9 47h1v1h-1zM11 47h1v1h-1zM13 47h4v1h-4zM19 47h1v1h-1zM21 47h2v1h-2zM24 47h4v1h-4zM29 47h1v1h-1zM33 47h4v1h-4zM38 47h1v1h-1zM40 47h1v1h-1zM43 47h2v1h-2zM47 47h2v1h-2zM50 47h6v1h-6zM57 47h4v1h-4zM1 48h2v1h-2zM5 48h3v1h-3zM9 48h6v1h-6zM18 48h4v1h-4zM23 48h1v1h-1zM30 48h1v1h-1zM32 48h1v1h-1zM35 48h2v1h-2zM42 48h2v1h-2zM47 48h3v1h-3zM51 48h1v1h-1zM53 48h6v1h-6zM2 49h4v1h-4zM7 49h4v1h-4zM12 49h2v1h-2zM15 49h1v1h-1zM18 49h1v1h-1zM20 49h4v1h-4zM31 49h1v1h-1zM33 49h1v1h-1zM35 49h1v1h-1zM37 49h2v1h-2zM40 49h2v1h-2zM45 49h1v1h-1zM50 49h8v1h-8zM59 49h2v1h-2zM2 50h6v1h-6zM13 50h3v1h-3zM17 50h1v1h-1zM20 50h1v1h-1zM22 50h1v1h-1zM26 50h1v1h-1zM29 50h1v1h-1zM35 50h1v1h-1zM37 50h2v1h-2zM40 50h1v1h-1zM44 50h1v1h-1zM46 50h2v1h-2zM49 50h1v1h-1zM53 50h1v1h-1zM56 50h1v1h-1zM0 51h3v1h-3zM4 51h1v1h-1zM10 51h2v1h-2zM13 51h1v1h-1zM17 51h1v1h-1zM19 51h1v1h-1zM23 51h1v1h-1zM27 51h2v1h-2zM30 51h1v1h-1zM33 51h1v1h-1zM35 51h1v1h-1zM38 51h2v1h-2zM41 51h1v1h-1zM47 51h4v1h-4zM54 51h4v1h-4zM0 52h4v1h-4zM6 52h1v1h-1zM8 52h1v1h-1zM14 52h4v1h-4zM20 52h1v1h-1zM22 52h1v1h-1zM25 52h8v1h-8zM34 52h1v1h-1zM37 52h2v1h-2zM42 52h4v1h-4zM50 52h1v1h-1zM52 52h8v1h-8zM8 53h3v1h-3zM14 53h3v1h-3zM18 53h3v1h-3zM22 53h2v1h-2zM25 53h1v1h-1zM28 53h1v1h-1zM32 53h4v1h-4zM39 53h3v1h-3zM44 53h3v1h-3zM48 53h1v1h-1zM51 53h2v1h-2zM56 53h1v1h-1zM0 54h7v1h-7zM8 54h1v1h-1zM10 54h1v1h-1zM14 54h1v1h-1zM16 54h5v1h-5zM24 54h5v1h-5zM30 54h1v1h-1zM32 54h7v1h-7zM40 54h7v1h-7zM50 54h1v1h-1zM52 54h1v1h-1zM54 54h1v1h-1zM56 54h3v1h-3zM60 54h1v1h-1zM0 55h1v1h-1zM6 55h1v1h-1zM8 55h2v1h-2zM13 55h1v1h-1zM16 55h1v1h-1zM18 55h1v1h-1zM20 55h4v1h-4zM26 55h3v1h-3zM32 55h2v1h-2zM37 55h3v1h-3zM41 55h1v1h-1zM44 55h2v1h-2zM47 55h1v1h-1zM49 55h4v1h-4zM56 55h1v1h-1zM0 56h1v1h-1zM2 56h3v1h-3zM6 56h1v1h-1zM9 56h1v1h-1zM11 56h1v1h-1zM13 56h4v1h-4zM18 56h3v1h-3zM22 56h1v1h-1zM25 56h1v1h-1zM28 56h7v1h-7zM40 56h1v1h-1zM49 56h1v1h-1zM52 56h5v1h-5zM59 56h2v1h-2zM0 57h1v1h-1zM2 57h3v1h-3zM6 57h1v1h-1zM8 57h3v1h-3zM14 57h2v1h-2zM17 57h2v1h-2zM24 57h4v1h-4zM29 57h3v1h-3zM35 57h3v1h-3zM41 57h2v1h-2zM44 57h1v1h-1zM47 57h3v1h-3zM51 57h1v1h-1zM54 57h1v1h-1zM56 57h1v1h-1zM60 57h1v1h-1zM0 58h1v1h-1zM2 58h3v1h-3zM6 58h1v1h-1zM8 58h4v1h-4zM14 58h3v1h-3zM20 58h2v1h-2zM26 58h1v1h-1zM29 58h2v1h-2zM32 58h1v1h-1zM35 58h1v1h-1zM41 58h1v1h-1zM43 58h4v1h-4zM48 58h1v1h-1zM50 58h1v1h-1zM53 58h7v1h-7zM0 59h1v1h-1zM6 59h1v1h-1zM9 59h3v1h-3zM14 59h2v1h-2zM20 59h2v1h-2zM24 59h1v1h-1zM31 59h2v1h-2zM35 59h2v1h-2zM38 59h1v1h-1zM43 59h2v1h-2zM49 59h5v1h-5zM55 59h1v1h-1zM57 59h2v1h-2zM0 60h7v1h-7zM8 60h1v1h-1zM10 60h1v1h-1zM12 60h1v1h-1zM14 60h2v1h-2zM21 60h4v1h-4zM29 60h1v1h-1zM31 60h1v1h-1zM35 60h4v1h-4zM41 60h1v1h-1zM43 60h1v1h-1zM45 60h4v1h-4zM50 60h2v1h-2zM55 60h1v1h-1zM57 60h1v1h-1zM59 60h2v1h-2z"/></svg></div>
+    <div class="back-text">
+      <p class="back-kicker">Scan to save contact</p>
+      <p class="back-name">Dmitrii Bleshchunov</p>
+      <p class="back-sub">Software Engineer · b8v.dev</p>
+    </div>
+  </div>
+  </div>
+  </div>
+
   <div class="actions">
     <div class="social-icons">
       <a href="https://www.linkedin.com/in/d-bleshchunov/" aria-label="LinkedIn">in</a>
@@ -401,6 +525,7 @@
       <button class="save" id="saveContact" type="button">Save contact</button>
     </div>
   </div>
+  <div id="status"></div>
   </main>
 
   <script>
@@ -429,5 +554,95 @@
     });
   </script>
 
+
+  <script>
+  /* Card: flip on tap/click, tilt after the phone's gyroscope or the cursor */
+  (() => {
+    const flip = document.getElementById('flip');
+    const inner = flip.querySelector('.flip-inner');
+    const front = flip.querySelector('.card.front');
+    const back = flip.querySelector('.card.back');
+    const btnFront = front.querySelector('.flip-btn');
+    const btnBack = back.querySelector('.flip-btn');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const clamp = (v, a) => Math.max(-a, Math.min(a, v));
+
+    let flipped = false;
+    const tgt = { rx: 0, ry: 0, f: 0 };
+    const cur = { rx: 0, ry: 0, f: 0 };
+
+    function setFlipped(v, fromKeyboard) {
+      flipped = v;
+      tgt.f = v ? 180 : 0;
+      front.setAttribute('aria-hidden', String(v));
+      back.setAttribute('aria-hidden', String(!v));
+      btnFront.tabIndex = v ? -1 : 0;
+      btnBack.tabIndex = v ? 0 : -1;
+      // snow fades out while the QR is shown, so nothing covers the code
+      document.documentElement.classList.toggle('qr-open', v);
+      if (fromKeyboard) (v ? btnBack : btnFront).focus({ preventScroll: true });
+    }
+
+    flip.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;          // links on the card keep working
+      enableGyro();
+      setFlipped(!flipped, e.detail === 0);
+    });
+
+    /* --- cursor (desktop) --- */
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const nx = clamp((e.clientX / innerWidth) * 2 - 1, 1);
+      const ny = clamp((e.clientY / innerHeight) * 2 - 1, 1);
+      tgt.ry = nx * 10;
+      tgt.rx = -ny * 8;
+    });
+    document.addEventListener('mouseleave', () => { tgt.rx = 0; tgt.ry = 0; });
+
+    /* --- gyroscope (phones) --- */
+    let base = null, gyroOn = false;
+    function onOrientation(e) {
+      if (e.beta == null || e.gamma == null) return;
+      if (!base) base = { b: e.beta, g: e.gamma };
+      // slowly re-centre, so any comfortable holding angle becomes "flat"
+      base.b += (e.beta - base.b) * 0.015;
+      base.g += (e.gamma - base.g) * 0.015;
+      tgt.ry = clamp(e.gamma - base.g, 30) * 0.6;
+      tgt.rx = clamp(-(e.beta - base.b), 30) * 0.5;
+    }
+    function listen() {
+      if (gyroOn) return;
+      gyroOn = true;
+      window.addEventListener('deviceorientation', onOrientation);
+    }
+    // Listen right away: Android sends events without asking. iOS only sends
+    // them after permission, which Safari lets us request from a tap.
+    let asked = false;
+    function enableGyro() {
+      const DOE = window.DeviceOrientationEvent;
+      if (!DOE || reduce || asked || typeof DOE.requestPermission !== 'function') return;
+      asked = true;
+      DOE.requestPermission().catch(() => {});
+    }
+    if (window.DeviceOrientationEvent && !reduce) listen();
+    document.addEventListener('click', (e) => { if (!e.target.closest('a')) enableGyro(); });
+
+    /* --- render loop --- */
+    function frame() {
+      const k = reduce ? 1 : 0.1;
+      cur.rx += ((reduce ? 0 : tgt.rx) - cur.rx) * k;
+      cur.ry += ((reduce ? 0 : tgt.ry) - cur.ry) * k;
+      cur.f += (tgt.f - cur.f) * (reduce ? 1 : 0.12);
+      if (Math.abs(tgt.f - cur.f) < 0.05) cur.f = tgt.f;
+      inner.style.transform = `rotateX(${cur.rx.toFixed(2)}deg) rotateY(${(cur.ry + cur.f).toFixed(2)}deg)`;
+      const side = cur.f > 90 ? -1 : 1;
+      inner.style.setProperty('--gx', `${50 + cur.ry * 3.5 * side}%`);
+      inner.style.setProperty('--gy', `${50 - cur.rx * 4}%`);
+      inner.style.setProperty('--ga', Math.min(0.55, (Math.abs(cur.rx) + Math.abs(cur.ry)) / 22).toFixed(3));
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+  </script>
 </body>
 </html>
