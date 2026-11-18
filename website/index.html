@@ -612,7 +612,8 @@
 
 
   <script>
-  /* Card: flip on tap/click, tilt after the phone's gyroscope or the cursor */
+  /* Card: flip on tap/click, tilt after the cursor on desktop.
+     (On phones the gyroscope drives the winter decor only, see winter.js.) */
   (() => {
     const flip = document.getElementById('flip');
     const inner = flip.querySelector('.flip-inner');
@@ -641,7 +642,6 @@
 
     flip.addEventListener('click', (e) => {
       if (e.target.closest('a')) return;          // links on the card keep working
-      enableGyro();
       setFlipped(!flipped, e.detail === 0);
     });
 
@@ -654,34 +654,6 @@
       tgt.rx = -ny * 12;
     });
     document.addEventListener('mouseleave', () => { tgt.rx = 0; tgt.ry = 0; });
-
-    /* --- gyroscope (phones) --- */
-    let base = null, gyroOn = false;
-    function onOrientation(e) {
-      if (e.beta == null || e.gamma == null) return;
-      if (!base) base = { b: e.beta, g: e.gamma };
-      // the reference is fixed: the card stays turned as long as the phone does
-      // counter-rotate: the card keeps "looking" at you while the phone tilts
-      tgt.ry = -clamp(e.gamma - base.g, 30) * 0.9;
-      tgt.rx = clamp(e.beta - base.b, 30) * 0.7;
-    }
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) base = null; });
-    function listen() {
-      if (gyroOn) return;
-      gyroOn = true;
-      window.addEventListener('deviceorientation', onOrientation);
-    }
-    // Listen right away: Android sends events without asking. iOS only sends
-    // them after permission, which Safari lets us request from a tap.
-    let asked = false;
-    function enableGyro() {
-      const DOE = window.DeviceOrientationEvent;
-      if (!DOE || reduce || asked || typeof DOE.requestPermission !== 'function') return;
-      asked = true;
-      DOE.requestPermission().catch(() => {});
-    }
-    if (window.DeviceOrientationEvent && !reduce) listen();
-    document.addEventListener('click', (e) => { if (!e.target.closest('a')) enableGyro(); });
 
     /* --- render loop --- */
     let half = 0;
