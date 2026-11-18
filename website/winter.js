@@ -69,25 +69,13 @@
    * it and snow falls along it, so both always go "down" in the real world.
    * Desktop keeps the plain CSS sway and vertical snow. */
   var PHONE = window.matchMedia('(pointer: coarse)').matches && !reduce;
-  // open any page with ?tilt to see the raw sensor values
-  var DEBUG = /[?&]tilt\b/.test(location.search) ? document.createElement('pre') : null;
-  if (DEBUG) {
-    DEBUG.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;margin:0;padding:6px 8px;background:rgba(19,31,45,.85);color:#fff;font:11px/1.4 monospace;border-radius:4px;pointer-events:none';
-    DEBUG.textContent = 'tilt: waiting for sensor…';
-    document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(DEBUG); });
-  }
   var G = { on: false, x: 0, y: 1, m: 1 };
 
   function onTilt(e) {
     if (e.beta == null || e.gamma == null) return;
     var b = e.beta * Math.PI / 180, g = e.gamma * Math.PI / 180;
     var x = Math.sin(g) * Math.cos(b), y = Math.sin(b);
-    // Screen rotation only matters in landscape. In portrait use 0: some iOS
-    // browsers report a stale or wrong angle, which turned the baubles sideways.
-    var portrait = window.innerHeight >= window.innerWidth;
-    var deg = portrait ? 0 : ((screen.orientation && typeof screen.orientation.angle === 'number')
-      ? screen.orientation.angle : (window.orientation || 0));
-    var a = deg * Math.PI / 180;
+    var a = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * Math.PI / 180;
     var rx = x * Math.cos(a) + y * Math.sin(a);
     var ry = -x * Math.sin(a) + y * Math.cos(a);
     // light smoothing against sensor jitter
@@ -95,11 +83,6 @@
     G.y += (ry - G.y) * 0.25;
     G.m = Math.hypot(G.x, G.y);
     if (!G.on) { G.on = true; root.classList.add('winter-gyro'); }
-    if (DEBUG) {
-      DEBUG.textContent = 'beta ' + e.beta.toFixed(1) + '  gamma ' + e.gamma.toFixed(1) +
-        '\nscreen ' + ((screen.orientation && screen.orientation.angle) + '/' + window.orientation) + '  used ' + deg +
-        '\ng ' + G.x.toFixed(2) + ', ' + G.y.toFixed(2) + '  angle ' + (Math.atan2(G.x, G.y) * 180 / Math.PI).toFixed(1);
-    }
   }
 
   if (PHONE && window.DeviceOrientationEvent) {
