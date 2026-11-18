@@ -69,12 +69,10 @@
 
   /* ===== Flip + tilt ===== */
   .flip {
-    --t: clamp(22px, 7cqw, 44px);   /* card thickness: a solid block */
     position: relative;
     width: 100%;
     aspect-ratio: 1.75 / 1;
-    /* far camera (relative to card width): edges show from ~6° of tilt */
-    perspective: 450cqw;
+    perspective: 1400px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
@@ -85,44 +83,6 @@
     transform-style: preserve-3d;
     will-change: transform;
   }
-
-  /* soft shadow on the "table": stays flat, slides opposite to the tilt */
-  .flip-shadow {
-    position: absolute;
-    left: -8%; right: -8%; top: 4%; bottom: -16%;
-    background: radial-gradient(closest-side, rgba(19, 31, 45, 0.34), rgba(19, 31, 45, 0.2) 45%, rgba(19, 31, 45, 0.07) 75%, rgba(19, 31, 45, 0));
-    transform: translate(var(--sx, 0px), var(--sy, 18px)) scaleX(var(--ss, 1));
-    pointer-events: none;
-  }
-
-  /* card edges: four thin faces that give the card its thickness */
-  .edge {
-    position: absolute;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    pointer-events: none;
-  }
-  .edge-l, .edge-r {
-    top: 0; bottom: 0;
-    width: var(--t);
-    background:
-      repeating-linear-gradient(to right, rgba(19, 31, 45, 0.07) 0 1px, transparent 1px 3px),
-      linear-gradient(to right, #e4e3dc, #f2f1eb 50%, #e4e3dc);
-  }
-  .edge-t, .edge-b {
-    left: 0; right: 0;
-    height: var(--t);
-    background:
-      repeating-linear-gradient(to bottom, rgba(19, 31, 45, 0.07) 0 1px, transparent 1px 3px),
-      linear-gradient(to bottom, #e6e5de, #f4f3ed 50%, #e6e5de);
-  }
-  .edge-l { filter: brightness(0.95); }
-  .edge-r { filter: brightness(0.87); }
-  .edge-t { filter: brightness(1); }
-  .edge-l { left: calc(var(--t) / -2); transform: rotateY(-90deg); }
-  .edge-r { left: calc(100% - var(--t) / 2); transform: rotateY(90deg); }
-  .edge-t { top: calc(var(--t) / -2); transform: rotateX(90deg); }
-  .edge-b { top: calc(100% - var(--t) / 2); transform: rotateX(-90deg); filter: brightness(0.83); }
 
   .card {
     container-type: inline-size;
@@ -139,8 +99,10 @@
       transparent 1px,
       transparent 4px
     );
-    border-radius: 1px;
-    box-shadow: none;
+    border-radius: 6px;
+    box-shadow:
+      0 1px 2px rgba(19, 31, 45, 0.08),
+      0 12px 40px -12px rgba(19, 31, 45, 0.25);
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-rows: auto 1fr auto;
@@ -161,8 +123,6 @@
     background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
       rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 45%, rgba(19, 31, 45, 0.07) 100%);
   }
-
-  .card.front { transform: translateZ(calc(var(--t) / 2 - 0.5px)); }
 
   .flip-btn {
     position: absolute;
@@ -187,7 +147,7 @@
 
   /* ===== Back side ===== */
   .card.back {
-    transform: rotateY(180deg) translateZ(calc(var(--t) / 2 - 0.5px));
+    transform: rotateY(180deg);
     grid-template-columns: auto 1fr;
     grid-template-rows: 1fr;
     grid-template-areas: "qr text";
@@ -374,8 +334,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 12px;
+    flex-wrap: nowrap;
+    --btn-px: 18px;
+    --btn-border: 1.5px;
   }
 
   .social-icons { display: flex; gap: 10px; }
@@ -398,7 +360,13 @@
   .social-icons a:hover,
   .social-icons a:focus-visible { background: var(--orange); }
 
-  .buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  /* pull the buttons left by padding + border, so their label (not the
+     outline) starts on the same line as the card text */
+  .buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: calc(-1 * (var(--btn-px) + var(--btn-border)));
+  }
 
   .save {
     display: inline-block;
@@ -410,9 +378,10 @@
     text-transform: uppercase;
     color: var(--navy);
     background: transparent;
-    border: 1.5px solid var(--navy);
+    border: var(--btn-border) solid var(--navy);
     border-radius: 999px;
-    padding: 10px 18px;
+    padding: 10px var(--btn-px);
+    white-space: nowrap;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
@@ -487,9 +456,10 @@
     .back-sub { font-size: 3.9cqw; }
     .phone { margin-top: 2.4cqw; }
 
-    .actions { flex-direction: column; align-items: flex-start; gap: 16px; flex-shrink: 0; }
-    .buttons { justify-content: flex-start; }
-    .save { padding: 9px 16px; font-size: 12px; }
+    .actions { gap: 8px; flex-shrink: 0; --btn-px: 11px; }
+    .buttons { gap: 6px; }
+    .save { padding: 8px var(--btn-px); font-size: 11px; letter-spacing: 0.6px; }
+    .social-icons { gap: 6px; }
   }
 
   /* ===== Print: a real 85 × 55 mm card ===== */
@@ -499,8 +469,7 @@
     .stage { display: block; width: auto; }
     .flip { width: 85mm; aspect-ratio: 85 / 55; perspective: none; }
     .flip-inner { transform: none !important; }
-    .card.back, .flip-btn, .glare, .edge, .flip-shadow { display: none !important; }
-    .card.front { transform: none; }
+    .card.back, .flip-btn, .glare { display: none !important; }
     .card { box-shadow: none; border-radius: 0; background-image: none; }
     .actions { display: none; }
     .b8v-eight { animation: none; opacity: 0; }
@@ -514,12 +483,7 @@
 
   <main class="stage">
   <div class="flip" id="flip">
-  <div class="flip-shadow" aria-hidden="true"></div>
   <div class="flip-inner">
-  <span class="edge edge-l" aria-hidden="true"></span>
-  <span class="edge edge-r" aria-hidden="true"></span>
-  <span class="edge edge-t" aria-hidden="true"></span>
-  <span class="edge edge-b" aria-hidden="true"></span>
   <article class="card front" itemscope itemtype="https://schema.org/Person">
     <div class="glare" aria-hidden="true"></div>
     <button class="flip-btn" type="button" aria-label="Show QR code">↻ QR</button>
@@ -571,14 +535,14 @@
   </div>
 
   <div class="actions">
+    <div class="buttons">
+      <a class="save" href="/blog.html">Blog →</a>
+      <button class="save" id="saveContact" type="button">Save contact</button>
+    </div>
     <div class="social-icons">
       <a href="https://www.linkedin.com/in/d-bleshchunov/" aria-label="LinkedIn">in</a>
       <a href="https://www.youtube.com/@bleschunov" aria-label="YouTube">YT</a>
       <a href="https://github.com/bleschunov" aria-label="GitHub">GH</a>
-    </div>
-    <div class="buttons">
-      <a class="save" href="/blog.html">Blog →</a>
-      <button class="save" id="saveContact" type="button">Save contact</button>
     </div>
   </div>
   <div id="status"></div>
@@ -655,26 +619,17 @@
     document.addEventListener('mouseleave', () => { tgt.rx = 0; tgt.ry = 0; });
 
     /* --- render loop --- */
-    let half = 0;
-    const edge = flip.querySelector('.edge-l');
-    const measure = () => { half = edge.offsetWidth / 2; };
-    measure();
-    window.addEventListener('resize', measure);
+
     function frame() {
       const k = reduce ? 1 : 0.1;
       cur.rx += ((reduce ? 0 : tgt.rx) - cur.rx) * k;
       cur.ry += ((reduce ? 0 : tgt.ry) - cur.ry) * k;
       cur.f += (tgt.f - cur.f) * (reduce ? 1 : 0.12);
       if (Math.abs(tgt.f - cur.f) < 0.05) cur.f = tgt.f;
-      // faces sit at ±t/2; shifting by -t/2 keeps the visible face in the page plane,
-      // so its text lines up exactly with the icons and buttons below
-      inner.style.transform = `translateZ(${-half}px) rotateX(${cur.rx.toFixed(2)}deg) rotateY(${(cur.ry + cur.f).toFixed(2)}deg)`;
+      inner.style.transform = `rotateX(${cur.rx.toFixed(2)}deg) rotateY(${(cur.ry + cur.f).toFixed(2)}deg)`;
       const side = cur.f > 90 ? -1 : 1;
       inner.style.setProperty('--gx', `${50 + cur.ry * 3.5 * side}%`);
       inner.style.setProperty('--gy', `${50 - cur.rx * 4}%`);
-      flip.style.setProperty('--sx', `${(-cur.ry * 1.3).toFixed(1)}px`);
-      flip.style.setProperty('--sy', `${(16 + cur.rx * 1.3).toFixed(1)}px`);
-      flip.style.setProperty('--ss', (0.35 + 0.65 * Math.abs(Math.cos(cur.f * Math.PI / 180))).toFixed(3));
       inner.style.setProperty('--ga', Math.min(0.55, (Math.abs(cur.rx) + Math.abs(cur.ry)) / 22).toFixed(3));
       requestAnimationFrame(frame);
     }
