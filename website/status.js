@@ -1,12 +1,19 @@
 /*
  * Live status line for b8v.dev: API latency, last deploy, commit.
  *
- *   <script src="/status.js" defer></script>
+ *   <script src="/status.js" defer></script>                   (deploy + commit)
+ *   <script src="/status.js" defer data-api="posts"></script>  (+ API latency)
+ *
+ * The script never calls the API itself. With data-api="posts" it reads the
+ * timing of the page's own request for posts (Resource Timing), so pages that
+ * don't show posts make no API requests at all.
  *
  * Renders into #status if the page has one, otherwise appends a footer.
  * build.json is written by CI on every website deploy (see .github/workflows/tf.yml).
  */
 (function () {
+  var script = document.currentScript;
+  var WATCH_API = !!(script && script.dataset.api === 'posts');
   var REPO = 'https://github.com/bleschunov/b8v';
   var API = 'https://api.b8v.dev/posts';
 
@@ -46,11 +53,28 @@
     return e;
   }
 
-  function ping() {
-    var t0 = performance.now();
-    return fetch(API, { cache: 'no-store' })
-      .then(function (r) { return { ok: r.ok, ms: Math.round(performance.now() - t0) }; })
-      .catch(function () { return { ok: false }; });
+  // Timing of the first request the page itself made to the posts API.
+  function apiTiming() {
+    return new Promise(function (resolve) {
+      if (!('PerformanceObserver' in window)) return resolve(null);
+      var done = false;
+      function pick(list) {
+        if (done) return;
+        for (var i = 0; i < list.length; i++) {
+          var e = list[i];
+          if (e.name.indexOf(API) !== 0) continue;
+          done = true;
+          obs.disconnect();
+          var status = e.responseStatus;           // not in every browser
+          resolve({ ok: !status || status < 400, ms: Math.round(e.duration) });
+          return;
+        }
+      }
+      var obs = new PerformanceObserver(function (l) { pick(l.getEntries()); });
+      try { obs.observe({ type: 'resource', buffered: true }); } catch (err) { return resolve(null); }
+      pick(performance.getEntriesByType('resource'));
+      setTimeout(function () { if (!done) { done = true; obs.disconnect(); resolve(null); } }, 10000);
+    });
   }
 
   function build() {
@@ -73,23 +97,29 @@
     box.classList.add('b8v-status');
     box.setAttribute('aria-label', 'Site status');
 
-    var dot = el('span', { class: 'dot', 'aria-hidden': 'true' });
-    var api = el('span', {}, 'api …');
-    box.append(dot, api);
+    var parts = [];
+    function add(node) {
+      if (parts.length) box.append(el('span', { class: 'sep' }, '·'));
+      box.append(node);
+      parts.push(node);
+    }
 
-    Promise.all([ping(), build()]).then(function (res) {
-      var p = res[0], b = res[1];
-      dot.className = 'dot ' + (p.ok ? 'ok' : 'fail');
-      api.textContent = p.ok ? 'api ' + p.ms + ' ms' : 'api unreachable';
-
-      if (!b || !b.commit) {
-        box.append(el('span', { class: 'sep' }, '·'), el('span', {}, 'local build'));
-        return;
-      }
+    // deploy info first, API latency (blog only) appended when its request finishes
+    build().then(function (b) {
+      if (!b || !b.commit) { add(el('span', {}, 'local build')); return; }
       var deployed = el('a', { href: b.run_url || REPO + '/actions', target: '_blank', rel: 'noopener', title: b.deployed_at }, 'deployed ' + ago(b.deployed_at));
       var commit = el('a', { href: REPO + '/commit/' + b.commit, target: '_blank', rel: 'noopener', title: 'Commit on GitHub' }, b.commit.slice(0, 7));
-      box.append(el('span', { class: 'sep' }, '·'), deployed, el('span', { class: 'sep' }, '·'), commit);
+      add(deployed);
+      add(commit);
       setInterval(function () { deployed.textContent = 'deployed ' + ago(b.deployed_at); }, 60000);
+    }).then(function () {
+      if (!WATCH_API) return;
+      return apiTiming().then(function (t) {
+        if (!t) return;
+        var dot = el('span', { class: 'dot ' + (t.ok ? 'ok' : 'fail'), 'aria-hidden': 'true' });
+        box.prepend(dot);
+        add(el('span', {}, t.ok ? 'api ' + t.ms + ' ms' : 'api error'));
+      });
     });
   }
 
