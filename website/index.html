@@ -56,10 +56,21 @@
   }
 
   /* ===== Card ===== */
+  /* .stage is the size container for the card's own padding and for .actions,
+     so text inside the card and the row below share one left edge */
+  .stage {
+    container-type: inline-size;
+    width: min(880px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    --inset: 7.5cqw;
+  }
+
   .card {
     container-type: inline-size;
     position: relative;
-    width: min(880px, 100%);
+    width: 100%;
     aspect-ratio: 1.75 / 1;
     background-color: var(--paper);
     /* laid-paper texture, like the printed card */
@@ -81,7 +92,7 @@
       "logo   logo"
       "person person"
       "org    phone";
-    padding: 7cqw 7.5cqw 6cqw 7.5cqw;
+    padding: 7cqw var(--inset) 6cqw var(--inset);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
 
@@ -226,7 +237,8 @@
 
   /* ===== Below the card ===== */
   .actions {
-    width: min(880px, 100%);
+    width: 100%;
+    padding: 0 var(--inset);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -295,6 +307,8 @@
       padding: 24px 20px calc(16px + env(safe-area-inset-bottom));
     }
 
+    .stage { flex: 1 1 0; min-height: 0; gap: 14px; --inset: 9cqw; }
+
     .card {
       aspect-ratio: auto;
       flex: 1 1 0;
@@ -306,7 +320,7 @@
         "person"
         "org"
         "phone";
-      padding: 11cqw 9cqw 10cqw;
+      padding: 11cqw var(--inset) 10cqw;
     }
 
     .logo-row { gap: 3.5cqw; }
@@ -320,7 +334,8 @@
     .org, .phone { font-size: 3.9cqw; }
     .phone { margin-top: 2.4cqw; }
 
-    .actions { justify-content: center; flex-direction: column; gap: 12px; flex-shrink: 0; }
+    .actions { flex-direction: column; align-items: flex-start; gap: 12px; flex-shrink: 0; }
+    .buttons { justify-content: flex-start; }
     .save { padding: 9px 16px; font-size: 12px; }
   }
 
@@ -328,6 +343,7 @@
   @media print {
     @page { size: 85mm 55mm; margin: 0; }
     body { background: #fff; padding: 0; border: 0; min-height: 0; display: block; }
+    .stage { display: block; width: auto; }
     .card { width: 85mm; aspect-ratio: 85 / 55; box-shadow: none; border-radius: 0; background-image: none; }
     .actions { display: none; }
     .b8v-eight { animation: none; opacity: 0; }
@@ -338,6 +354,7 @@
 </head>
 <body>
 
+  <main class="stage">
   <article class="card" itemscope itemtype="https://schema.org/Person">
     <div class="logo-row">
       <div class="b8v-logo" aria-label="bleschunov">
@@ -384,6 +401,7 @@
       <button class="save" id="saveContact" type="button">Save contact</button>
     </div>
   </div>
+  </main>
 
   <script>
     document.getElementById('saveContact').addEventListener('click', () => {
