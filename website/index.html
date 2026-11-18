@@ -103,26 +103,26 @@
     pointer-events: none;
   }
   .edge-l, .edge-r {
-    top: 4px; bottom: 4px;
+    top: 0; bottom: 0;
     width: var(--t);
     background:
       repeating-linear-gradient(to right, rgba(19, 31, 45, 0.07) 0 1px, transparent 1px 3px),
       linear-gradient(to right, #e4e3dc, #f2f1eb 50%, #e4e3dc);
   }
   .edge-t, .edge-b {
-    left: 4px; right: 4px;
+    left: 0; right: 0;
     height: var(--t);
     background:
       repeating-linear-gradient(to bottom, rgba(19, 31, 45, 0.07) 0 1px, transparent 1px 3px),
       linear-gradient(to bottom, #e6e5de, #f4f3ed 50%, #e6e5de);
   }
-  .edge-l { filter: brightness(0.92); }
-  .edge-r { filter: brightness(0.8); }
-  .edge-t { filter: brightness(1.02); }
+  .edge-l { filter: brightness(0.95); }
+  .edge-r { filter: brightness(0.87); }
+  .edge-t { filter: brightness(1); }
   .edge-l { left: calc(var(--t) / -2); transform: rotateY(-90deg); }
   .edge-r { left: calc(100% - var(--t) / 2); transform: rotateY(90deg); }
   .edge-t { top: calc(var(--t) / -2); transform: rotateX(90deg); }
-  .edge-b { top: calc(100% - var(--t) / 2); transform: rotateX(-90deg); filter: brightness(0.76); }
+  .edge-b { top: calc(100% - var(--t) / 2); transform: rotateX(-90deg); filter: brightness(0.83); }
 
   .card {
     container-type: inline-size;
@@ -139,8 +139,8 @@
       transparent 1px,
       transparent 4px
     );
-    border-radius: 4px;
-    box-shadow: 0 0 0 0.5px rgba(19, 31, 45, 0.08);
+    border-radius: 1px;
+    box-shadow: none;
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-rows: auto 1fr auto;
@@ -162,7 +162,7 @@
       rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 45%, rgba(19, 31, 45, 0.07) 100%);
   }
 
-  .card.front { transform: translateZ(calc(var(--t) / 2)); }
+  .card.front { transform: translateZ(calc(var(--t) / 2 - 0.5px)); }
 
   .flip-btn {
     position: absolute;
@@ -187,7 +187,7 @@
 
   /* ===== Back side ===== */
   .card.back {
-    transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
+    transform: rotateY(180deg) translateZ(calc(var(--t) / 2 - 0.5px));
     grid-template-columns: auto 1fr;
     grid-template-rows: 1fr;
     grid-template-areas: "qr text";
@@ -660,13 +660,12 @@
     function onOrientation(e) {
       if (e.beta == null || e.gamma == null) return;
       if (!base) base = { b: e.beta, g: e.gamma };
-      // slowly re-centre, so any comfortable holding angle becomes "flat"
-      base.b += (e.beta - base.b) * 0.015;
-      base.g += (e.gamma - base.g) * 0.015;
+      // the reference is fixed: the card stays turned as long as the phone does
       // counter-rotate: the card keeps "looking" at you while the phone tilts
       tgt.ry = -clamp(e.gamma - base.g, 30) * 0.9;
       tgt.rx = clamp(e.beta - base.b, 30) * 0.7;
     }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) base = null; });
     function listen() {
       if (gyroOn) return;
       gyroOn = true;
