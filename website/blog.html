@@ -324,7 +324,7 @@
 
     async function loadPosts() {
       try {
-        const res = await fetch('https://api.b8v.dev/posts');
+        const res = await fetch('/posts.json', { cache: 'no-cache' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const posts = await res.json();
 
