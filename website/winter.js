@@ -51,6 +51,7 @@
       pointer-events: none; filter: drop-shadow(0 -1px 1px rgba(143, 166, 191, 0.55));
     }
 
+    html.winter-gyro .xmas .ornament { animation: none; }
     @media (prefers-reduced-motion: reduce) { .xmas .ornament { animation: none; } }
     @media print { .xmas, #b8v-snow, .b8v-drift { display: none !important; } }
   `;
@@ -60,6 +61,41 @@
 
   /* ---------- helpers ---------- */
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- gravity from the gyroscope (phones only) ----------
+   * Screen-plane gravity from deviceorientation: with the phone's beta (front/back)
+   * and gamma (left/right) tilt, gravity in screen coordinates (x right, y down) is
+   * (sin γ · cos β, sin β), rotated by the screen orientation. Baubles hang along
+   * it and snow falls along it, so both always go "down" in the real world.
+   * Desktop keeps the plain CSS sway and vertical snow. */
+  var PHONE = window.matchMedia('(pointer: coarse)').matches && !reduce;
+  var G = { on: false, x: 0, y: 1, m: 1 };
+
+  function onTilt(e) {
+    if (e.beta == null || e.gamma == null) return;
+    var b = e.beta * Math.PI / 180, g = e.gamma * Math.PI / 180;
+    var x = Math.sin(g) * Math.cos(b), y = Math.sin(b);
+    var a = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * Math.PI / 180;
+    var rx = x * Math.cos(a) + y * Math.sin(a);
+    var ry = -x * Math.sin(a) + y * Math.cos(a);
+    // light smoothing against sensor jitter
+    G.x += (rx - G.x) * 0.25;
+    G.y += (ry - G.y) * 0.25;
+    G.m = Math.hypot(G.x, G.y);
+    if (!G.on) { G.on = true; root.classList.add('winter-gyro'); }
+  }
+
+  if (PHONE && window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', onTilt);
+    // iOS sends orientation only after permission, which needs a tap
+    var askedTilt = false;
+    document.addEventListener('click', function (e) {
+      if (askedTilt || e.target.closest('a')) return;
+      if (typeof DeviceOrientationEvent.requestPermission !== 'function') return;
+      askedTilt = true;
+      DeviceOrientationEvent.requestPermission().catch(function () {});
+    });
+  }
   var FIR = script ? new URL('fir-branch.svg', script.src).href : '/fir-branch.svg';
 
   function rng(seed) {
@@ -143,7 +179,7 @@
       var cy = y0 + L + 5 + rad;
       var dur = (4 + (i % 3) * 1.1).toFixed(1);
       var amp = (6 - Math.min(L, 80) / 25).toFixed(1);
-      out += '<g class="ornament" style="transform-origin:' + xi + 'px ' + y0 + 'px;--dur:' + dur + 's;--delay:-' + (i * 0.7).toFixed(1) + 's;--amp:' + amp + 'deg">' +
+      out += '<g class="ornament" data-l="' + L.toFixed(1) + '" style="transform-origin:' + xi + 'px ' + y0 + 'px;--dur:' + dur + 's;--delay:-' + (i * 0.7).toFixed(1) + 's;--amp:' + amp + 'deg">' +
         '<line x1="' + xi + '" y1="' + y0 + '" x2="' + xi + '" y2="' + (y0 + L + 1) + '" stroke="#8a8f98" stroke-width="1"/>' +
         '<rect x="' + (xi - 3.5 * k) + '" y="' + (y0 + L) + '" width="' + (7 * k) + '" height="' + (6 * k) + '" rx="1" fill="#b9bec6"/>' +
         '<circle cx="' + xi + '" cy="' + cy + '" r="' + rad + '" fill="url(#g-' + c + ')"/>' +
@@ -152,7 +188,31 @@
         '</g>';
     }
     svg.innerHTML = out;
+    pendulums = Array.prototype.map.call(svg.querySelectorAll('.ornament'), function (node) {
+      var L = parseFloat(node.getAttribute('data-l')) || 40;
+      // longer strings swing slower, like a real pendulum
+      return { node: node, a: 0, v: 0, k: 0.05 * Math.sqrt(40 / (L + 10)) };
+    });
   }
+
+  var pendulums = [];
+  function swing() {
+    if (G.on) {
+      // angle of gravity from screen-down; when the phone lies flat the
+      // in-plane pull is weak, so the baubles settle gently instead of flipping
+      var target = Math.atan2(G.x, G.y) * 180 / Math.PI;
+      target = Math.max(-80, Math.min(80, target)) * Math.min(1, G.m / 0.35);
+      for (var i = 0; i < pendulums.length; i++) {
+        var p = pendulums[i];
+        p.v += (-target - p.a) * p.k;
+        p.v *= 0.9;
+        p.a += p.v;
+        p.node.style.transform = 'rotate(' + p.a.toFixed(2) + 'deg)';
+      }
+    }
+    requestAnimationFrame(swing);
+  }
+  if (PHONE) requestAnimationFrame(swing);
 
   /* ---------- snow ---------- */
   function startSnow(cv) {
@@ -173,8 +233,24 @@
       for (var j = 0; j < flakes.length; j++) {
         var f = flakes[j];
         if (move) {
-          f.y += f.vy; f.ph += 0.012; f.x += Math.sin(f.ph) * f.amp * 0.4;
-          if (f.y > H + 20) flakes[j] = f = flake(false);
+          f.ph += 0.012;
+          if (G.on) {
+            // fall along real-world down, with the sway across it
+            var m = G.m || 1, dx = G.x / m, dy = G.y / m;
+            var sp = f.vy * (0.45 + 0.55 * Math.min(1, m / 0.6));
+            var sw = Math.sin(f.ph) * f.amp * 0.4;
+            f.x += dx * sp - dy * sw;
+            f.y += dy * sp + dx * sw;
+            if (f.x < -30 || f.x > W + 30 || f.y < -30 || f.y > H + 30) {
+              flakes[j] = f = flake(false);
+              // re-enter from the "upper" side relative to gravity
+              if (Math.abs(dx) > Math.abs(dy)) { f.x = dx > 0 ? -20 : W + 20; f.y = Math.random() * H; }
+              else { f.y = dy > 0 ? -20 : H + 20; f.x = Math.random() * W; }
+            }
+          } else {
+            f.y += f.vy; f.x += Math.sin(f.ph) * f.amp * 0.4;
+            if (f.y > H + 20) flakes[j] = f = flake(false);
+          }
         }
         ctx.fillStyle = 'rgba(143, 166, 191, ' + f.a + ')';
         if (f.glyph) {
