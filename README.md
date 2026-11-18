@@ -4,9 +4,9 @@ A small serverless blog built on AWS, entirely provisioned with Terraform. This 
 
 ## Architecture
 
-The site is a static two-page frontend backed by a small serverless API:
+The site is a static frontend backed by a small serverless API:
 
-- **Frontend** — `index.html` (lists all blog posts, served at the root path) and `404.html` (served for any other path). Both are static files stored in a private **S3** bucket and distributed through **CloudFront**. CloudFront keeps the bucket private, terminates HTTPS, and caches/optimizes static asset delivery.
+- **Frontend** — `index.html` (business card, served at the root path), `blog.html` (lists all blog posts) and `404.html` (served for any other path). Both are static files stored in a private **S3** bucket and distributed through **CloudFront**. CloudFront keeps the bucket private, terminates HTTPS, and caches/optimizes static asset delivery.
 - **Data storage** — posts are stored in **DynamoDB**, a managed NoSQL database. For the expected volume (up to ~1000 posts) it's inexpensive and provides everything needed, without paying for an always-on instance the way a PostgreSQL setup on RDS would require.
 - **API layer** — **API Gateway** (HTTP API) in front of three Python **Lambda** functions:
   - `GET /posts` → `get_all_posts` — public, used by the frontend to render the post list
@@ -14,7 +14,7 @@ The site is a static two-page frontend backed by a small serverless API:
   - `DELETE /post` → `delete_post` — protected with **AWS IAM** authorization
 
   IAM authorization is enough here since only the author manages posts. If the blog ever needed to support multiple registered users, OIDC-based authorization would be the better fit.
-- **Frontend ↔ API** — `index.html` includes JavaScript that calls the API on page load to fetch all posts from DynamoDB and render them.
+- **Frontend ↔ API** — `blog.html` includes JavaScript that calls the API on page load to fetch all posts from DynamoDB and render them.
 - **TLS & DNS** — certificates for both the site and the API are issued through **ACM**. The domain is registered in Squarespace (an existing domain, kept there instead of moving to Route 53) with CNAME records pointing at the AWS endpoints.
 
 ```mermaid
