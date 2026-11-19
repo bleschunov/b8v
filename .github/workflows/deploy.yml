@@ -1,6 +1,7 @@
 name: Deploy
 
-# Static site: website/ goes to the b8v.dev/ prefix of the shared static-sites bucket.
+# Static site: website/ (plus the CV PDF built from cv/main.tex) goes to the b8v.dev/
+# prefix of the shared static-sites bucket.
 # Hosting (bucket, CloudFront, certificate, deploy role) lives in bleschunov/infra.
 # Repo variables from `terraform output github_variables` there:
 # AWS_ROLE_ARN, S3_BUCKET, S3_PREFIX, CLOUDFRONT_DISTRIBUTION_ID.
@@ -10,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'website/**'
+      - 'cv/**'
       - '.github/workflows/deploy.yml'
   pull_request:
   workflow_dispatch:
@@ -18,8 +20,11 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  CV_PDF: dmitrii_bleshchunov_software_engineer.pdf
+
 jobs:
-  check:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,29 +42,46 @@ jobs:
           print(f"{len(posts)} posts OK")
           EOF
 
-  deploy:
-    needs: check
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Build CV PDF
+        uses: xu-cheng/latex-action@v3
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          working_directory: cv
+          root_file: main.tex
 
-      - name: Write build info
+      - name: Assemble site
         run: |
+          cp cv/main.pdf "website/cv/$CV_PDF"
           printf '{"commit":"%s","deployed_at":"%s","run_url":"%s"}\n' \
             "$GITHUB_SHA" \
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             > website/build.json
           cat website/build.json
+          find website -type f | sort
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: website
+          retention-days: 30
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: website
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
 
       - name: Upload to S3
         run: |
