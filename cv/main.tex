@@ -49,8 +49,9 @@
 \newcommand{\stack}[1]{\item \textbf{Stack:} #1}
 
 % A labelled one-liner at the bottom: \fact{LANGUAGES}{English (B2) ...}
-% Shrinks a line just enough to keep it on one line.
-\newcommand{\oneline}[1]{\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{#1}}
+% Shrinks a line just enough to keep it on one line (1pt short of the full width:
+% a box of exactly \linewidth wraps below the bullet on newer TeX Live).
+\newcommand{\oneline}[1]{\resizebox{\ifdim\width>\dimexpr\linewidth-1pt\relax\dimexpr\linewidth-1pt\relax\else\width\fi}{!}{#1}}
 
 \newcommand{\fact}[2]{\par\vspace{12pt}{\small\textbf{#1}\hspace{8pt}#2}\par}
 
