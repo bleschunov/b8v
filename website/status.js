@@ -1,21 +1,21 @@
 /*
- * Live status line for b8v.dev: API latency, last deploy, commit.
+ * Live status line for b8v.dev: posts load time, last deploy, commit.
  *
  *   <script src="/status.js" defer></script>                   (deploy + commit)
- *   <script src="/status.js" defer data-api="posts"></script>  (+ API latency)
+ *   <script src="/status.js" defer data-api="posts"></script>  (+ posts load time)
  *
- * The script never calls the API itself. With data-api="posts" it reads the
- * timing of the page's own request for posts (Resource Timing), so pages that
- * don't show posts make no API requests at all.
+ * The script never fetches posts itself. With data-api="posts" it reads the
+ * timing of the page's own request for /posts.json (Resource Timing), so pages
+ * that don't show posts make no extra requests.
  *
  * Renders into #status if the page has one, otherwise appends a footer.
- * build.json is written by CI on every website deploy (see .github/workflows/tf.yml).
+ * build.json is written by CI on every website deploy (see .github/workflows/deploy.yml).
  */
 (function () {
   var script = document.currentScript;
   var WATCH_API = !!(script && script.dataset.api === 'posts');
   var REPO = 'https://github.com/bleschunov/b8v';
-  var API = 'https://api.b8v.dev/posts';
+  var API = location.origin + '/posts.json';
 
   var css = `
     .b8v-status {
@@ -53,7 +53,7 @@
     return e;
   }
 
-  // Timing of the first request the page itself made to the posts API.
+  // Timing of the first request the page itself made for the posts.
   function apiTiming() {
     return new Promise(function (resolve) {
       if (!('PerformanceObserver' in window)) return resolve(null);
@@ -104,7 +104,7 @@
       parts.push(node);
     }
 
-    // deploy info first, API latency (blog only) appended when its request finishes
+    // deploy info first, posts load time (blog only) appended when its request finishes
     build().then(function (b) {
       if (!b || !b.commit) { add(el('span', {}, 'local build')); return; }
       var deployed = el('a', { href: b.run_url || REPO + '/actions', target: '_blank', rel: 'noopener', title: b.deployed_at }, 'deployed ' + ago(b.deployed_at));
@@ -118,7 +118,7 @@
         if (!t) return;
         var dot = el('span', { class: 'dot ' + (t.ok ? 'ok' : 'fail'), 'aria-hidden': 'true' });
         box.prepend(dot);
-        add(el('span', {}, t.ok ? 'api ' + t.ms + ' ms' : 'api error'));
+        add(el('span', {}, t.ok ? 'posts ' + t.ms + ' ms' : 'posts error'));
       });
     });
   }

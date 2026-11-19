@@ -1,17 +1,12 @@
 .idea/
-.terraform/
-*.tfstate
-*.tfstate.*
-terraform.tfvars
-
-**pycache**/
-*.pyc
-
-dist/*
-!dist/.gitkeep
-!dist/layer_build/.gitkeep
-
-.secrets
-
 .DS_Store
 website/build.json
+
+# LaTeX build output (cv/main.tex); CI copies the PDF into website/cv/
+cv/*.aux
+cv/*.log
+cv/*.out
+cv/*.fls
+cv/*.fdb_latexmk
+cv/*.pdf
+website/cv/*.pdf

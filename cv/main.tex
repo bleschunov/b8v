@@ -1,0 +1,126 @@
+% CV of Dmitrii Bleshchunov. Build: latexmk -pdf main.tex
+% CI builds it on every push and publishes it to https://b8v.dev/cv (see .github/workflows/deploy.yml).
+
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[scaled=0.9167]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[left=0.35in,right=0.3in,top=0.4in,bottom=0.4in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Machine-readable text for ATS parsers.
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+\definecolor{link}{rgb}{0.08,0.08,0.6}
+\hypersetup{
+  colorlinks=true,
+  urlcolor=link,
+  linkcolor=link,
+  pdftitle={Dmitrii Bleshchunov - Senior Software Engineer},
+  pdfauthor={Dmitrii Bleshchunov},
+  pdfsubject={CV},
+  pdfkeywords={Software Engineer, Python, RAG, AI agents, Distributed Systems}
+}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\raggedright
+
+\setlist[itemize]{label={\textbullet}, leftmargin=8pt, labelsep=4pt,
+  topsep=3pt, itemsep=3.9pt, parsep=0pt, partopsep=0pt}
+
+% \cvsection{TITLE}
+\newcommand{\cvsection}[1]{\par\vspace{14pt}{\small\bfseries #1}\par\vspace{10pt}}
+
+% \job{company}{title}{country}{dates}
+\newcommand{\job}[4]{%
+  \par{\small\bfseries #1 \textbar{} #2 \textbar{} #3 (#4)}\par\vspace{3pt}}
+
+% \about{one-line description of the company}
+\newcommand{\about}[1]{{\small #1}\par}
+
+\newcommand{\stack}[1]{\item \textbf{Stack:} #1}
+
+% A labelled one-liner at the bottom: \fact{LANGUAGES}{English (B2) ...}
+% Shrinks a line just enough to keep it on one line (1pt short of the full width:
+% a box of exactly \linewidth wraps below the bullet on newer TeX Live).
+\newcommand{\oneline}[1]{\resizebox{\ifdim\width>\dimexpr\linewidth-1pt\relax\dimexpr\linewidth-1pt\relax\else\width\fi}{!}{#1}}
+
+\newcommand{\fact}[2]{\par\vspace{12pt}{\small\textbf{#1}\hspace{8pt}#2}\par}
+
+\begin{document}
+\small
+
+%----------------------------------------------------------------- HEADER
+{\fontsize{17.28}{20}\selectfont\bfseries Dmitrii Bleshchunov}\par
+\vspace{8pt}
+Senior Software Engineer, 5+ years \textbar{} Scalable RAG pipelines and AI agents (text and voice) \textbar{} Distributed Systems\par
+\vspace{5pt}
+Belgrade, Serbia (CET), fully remote \textbar{} \href{mailto:d.bleshchunov@gmail.com}{d.bleshchunov@gmail.com} \textbar{} +381 62 1247 643\par
+\vspace{5pt}
+\href{https://linkedin.com/in/d-bleshchunov}{linkedin.com/in/d-bleshchunov} \textbar{} \href{https://github.com/bleschunov}{github.com/bleschunov}\par
+
+%----------------------------------------------------------------- EXPERIENCE
+\vspace{10pt}
+\cvsection{PROFESSIONAL EXPERIENCE}
+
+\job{Graphlogic (\href{https://chatme.ai/en}{chatme.ai/en})}{Senior Software Engineer}{Serbia}{Jun 2024 -- Jul 2026, 2 years}
+\about{Multi-tenant platform for AI-driven chatbots and agent orchestration with $\sim$100K conversations a day.}
+\begin{itemize}
+  \item Designed \& developed tool layer for custom ReAct agent: internal tools and MCP (1.7M LLM requests/y)
+  \item Designed \& developed ClickHouse analytics for AI-driven chatbots with GraphQL API (15+ metrics, 1.06B events/y)
+  \item Designed \& launched voice connector for chatbots with voice activity detection (VAD) and interruption handling (7 STT/TTS providers, 36K+ calls/y)
+  \item Designed \& launched scale-to-zero autoscaling for Text Embeddings Inference (TEI) in RAG pipeline (TEI infra cost reduced 4x, 1.4M RAG requests/y)
+  \item \oneline{Designed \& built pipeline of AI coding agents for developing new chatbot channel integrations (20+ skills, time from task definition to production cut by 80\%)}
+  \stack{Python (FastAPI), React, PostgreSQL, ClickHouse, RabbitMQ, Kubernetes}
+\end{itemize}
+\vspace{6pt}
+
+\job{\href{https://krenels.tech}{krenels.tech}}{Middle Software Engineer}{Russia}{Jun 2022 -- Jun 2024, 2 years}
+\about{A company whose \href{https://krenels.tech/\#:~:text=Companies\%20we\%20built\%20for}{clients} include \href{https://case.law/}{Harvard Caselaw} and \href{https://www.fresha.com/}{Fresha}. Led a team of 5 engineers delivering projects for a major development company.}
+\begin{itemize}
+  \item Designed \& launched text-to-SQL AI assistant (50+ tables, 950+ columns, 3.4M+ rows of cash-flow data)
+  \item Designed \& launched RAG pipeline and AI chatbot for internal PDF instructions (62K+ characters with images and tables)
+  \item Designed \& launched company-wide product catalog mapping (150K items/mth, 3K classes, 75\% accuracy)
+  \stack{Python (FastAPI), PostgreSQL, MSSQL, Chroma, FAISS, Redis, React}
+\end{itemize}
+\vspace{6pt}
+
+\job{KAMAZ DIGITAL}{Backend Engineer}{Russia}{Dec 2021 -- Jun 2022, 6 months}
+\about{An IT company building manufacturing and fleet software with 300+ engineers \& 100K+ vehicles connected.}
+\begin{itemize}
+  \item Extended \& optimized 5+ bi-directional integrations with the largest freight marketplaces in Russia (4K+ events/d)
+  \item Designed \& launched address normalization script for all auctions (batch runs, rate-limited, idempotent)
+  \stack{Python (FastAPI), Playwright, PostgreSQL, Redis, NATS}
+\end{itemize}
+\vspace{6pt}
+
+\job{Manager 360}{Backend Engineer}{Russia}{Jun 2021 -- Dec 2021, 6 months}
+\about{Team-management and analytics platform for professional football, used by 50+ Russian football clubs.}
+\begin{itemize}
+  \item Extended \& optimized football analytics layer (3M+ events/y, 25+ aggregation SQL queries)
+  \item Optimized player stats calculation (5 min $\rightarrow$ 2--60 s, 8 s $\rightarrow$ 4 s)
+  \item Reworked match events loading into a single query (1 query instead of 1 per match, $\sim$22x fewer rows)
+  \item Built per-match stats pre-aggregation ($\sim$2.5K events $\rightarrow$ $\sim$20 rows per player)
+  \stack{Python (FastAPI), PostgreSQL, SQLAlchemy}
+\end{itemize}
+
+%----------------------------------------------------------------- EDUCATION
+\cvsection{EDUCATION}
+
+\oneline{\textbf{Bachelor's program in Computer Science} (completed 1st year, 5.0/5.0 grade average) \textbar{} \href{https://english.mirea.ru/}{MIREA -- Russian Technological University} \textbar{} Sep 2021 -- May 2022}\par
+\vspace{5pt}
+\oneline{School 21, Moscow: passed the one-month selection bootcamp (piscine), finished in the top 5 of the cohort; gave several talks to peers on solving the tasks}\par
+
+%----------------------------------------------------------------- OTHER
+\fact{LANGUAGES}{English (B2) \textbullet{} Russian (native)}
+\fact{HOBBIES}{Teaching \textbullet{} Tech Writing}
+
+\end{document}
